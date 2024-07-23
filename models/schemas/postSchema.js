@@ -1,5 +1,6 @@
 const {Schema} = require('mongoose');
 const {nanoid} = require('nanoid');
+const path = require('path');
 // 중복 없는 문자열을 생성해주는 nanoid
 // 추가 또는 수정될 때마다 날짜 데이터를 만들어주는 newDate()
 const newDate = require('../../utils/newDate');
@@ -9,16 +10,25 @@ const postSchema = new Schema({
     nanoid: {
         type: String,
         default: () => { return nanoid() },
-        require: true,
+        required: true,
         index: true
     },
     // 호스트 정보
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
         index: true
     },
+    // 숙소 메인 사진(multer, 등록 시 첫 번째 사진이 메인 사진)
+    main_image: {
+        data: Buffer,
+        contentType: String
+    },
+    // 숙소 나머지 사진들(multer)
+    sub_images: [{
+        data: Buffer,
+        contentType: String
+    }],
     // 숙소 타이틀
     title: {
         type: String,
@@ -79,14 +89,12 @@ const postSchema = new Schema({
     // 포스트 생성일
     create_at: {
         type: String,
-        default: () => { return newDate() },
-        require: true
+        default: () => { return newDate() }
     },
     // 포스트 수정일
     update_at: {
         type: String,
-        default: () => { return newDate() },
-        require: true
+        default: () => { return newDate() }
     }
 },{
     timestamps: true

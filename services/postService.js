@@ -1,5 +1,9 @@
 const {User, Post, Like} = require('../models');
 const newDate = require('../utils/newDate');
+// 이미지 해상도 조절
+const sharp = require('sharp');
+// 이미지 확장자 검사에 쓰일 예정
+const path = require('path');
 
 class PostService {
     // 전체 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
@@ -61,16 +65,51 @@ class PostService {
     }
     
     // 숙소 쓰기
-    async writePost(bodyData){
+    async writePost(bodyData, imageFiles){
         // 숙소 정보에 추가로 로그인된 유저 이메일 요구
+        /*
         const author = await User.findOne({email: bodyData.email});
         if(!author) { 
             const error = new Error();
             Object.assign(error, {code: 400, message: "유저 정보를 가져오지 못했습니다. 다시 확인해주세요."});
             throw error;
+        }*/
+
+        // 메인, 서브 이미지 추출
+        const mainImage = imageFiles[0];
+        const subImages = imageFiles;
+
+        // 이미지 파일 확장자 검사
+        // path.extname 과 includes를 사용하여 false 인 배열 요소들을 모음.
+        const nonImageFiles = imageFiles.filter(v => {
+            const ext = path.extname(v.originalname).toLowerCase();
+            return !['.jpg', '.jpeg', '.png', '.gif'].includes(ext);
+        });
+        if (nonImageFiles.length > 0) {
+            const error = new Error();
+            Object.assign(error, {code: 400, message: "이미지 확장자가 아닌 파일이 있습니다."});
+            throw error;
         }
+
+        // 이미지 처리: width: 1200 보다 클 때 리사이즈 및 압축
+        const imageProcessing = async (imageBuffer) => {
+            return sharp(imageBuffer).resize({width: 1200, withoutEnlargement: true})
+                .jpeg({quality: 90})
+                .toBuffer(); // 처리 후 버퍼 반환
+        };
+
+        // 메인, 서브 이미지 처리
+        const mainImageBuf = await imageProcessing(mainImage.buffer);
+        // 모든 서브 v 에서의 await 를 비동기 처리하여 정상적인 배열을 받아야하므로 Promise.all 적용
+        const processedSubImages = await Promise.all(
+            subImages.map(async (v) => {
+                const processedBuf = await imageProcessing(v.buffer);
+                return { data: processedBuf, contentType: v.mimetype };
+            })
+        );
+
         const data = await Post.create({
-            author: author,
+            // author: author,
             title: bodyData.title,
             max_adult: bodyData.max_adult,
             max_child: bodyData.max_child,
@@ -81,7 +120,12 @@ class PostService {
             room_num: bodyData.room_num,
             category: bodyData.category,
             host_intro: bodyData.host_intro,
-            option: bodyData.option
+            option: bodyData.option,
+            main_image: {
+                data: mainImageBuf,
+                contentType: mainImage.mimetype
+            },
+            sub_images: processedSubImages
         });
         return {data: data, code: 200, message: `숙소 등록 완료`};
     };

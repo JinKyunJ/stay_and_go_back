@@ -13,7 +13,8 @@ const jwtMiddleware = require('./middlewares/jwtMiddleware');
 const userRouter = require('./routes/userRouter');
 const loginRouter = require('./routes/loginRouter');
 const postRouter = require('./routes/postsRouter');
-
+// multer 설정 가져오기
+const upload = require('./utils/multerConfig');
 
 const app = express();
 

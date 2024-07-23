@@ -2,6 +2,8 @@ const {Router} = require('express');
 const router = Router();
 const asyncHandler = require('../middlewares/async-handler');
 const postService = require('../services/postService');
+// multer 이미지 업로드 설정 가져오기
+const upload = require('../utils/multerConfig');
 
 // 전체 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
 router.get('/getallposts/:nowpage/:category', asyncHandler(async (req,res) => { 
@@ -26,10 +28,14 @@ router.get('/read/:nanoid', asyncHandler(async (req, res) => {
 
 
 // 숙소 작성
-router.post('/write', asyncHandler(async (req, res) => {
+router.post('/write', upload.array('images'), asyncHandler(async (req, res) => {
     // 숙소 정보에 추가로 로그인된 사용자 email 이 있어야 함 *front 에서도 체크해야 함
     const bodyData = req.body;
-    const result = await postService.writePost(bodyData);
+    // 요청 파일 없음 에러(임의의 코드 : 410)
+    if(!req.files || req.files.length === 0){
+        return res.status(400).json({code: 400, message: "요청에 이미지 파일이 없습니다."});
+    }
+    const result = await postService.writePost(bodyData, req.files);
     return res.status(200).json(result);
 }));
 
