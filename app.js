@@ -5,11 +5,14 @@ const passport = require('passport');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-// middleware
-
 // login strategy
-
+const local = require('./strategy/loginStrategy');
+const jwtlocal = require('./strategy/jwtStrategy');
+const jwtMiddleware = require('./middlewares/jwtMiddleware');
 // server router
+const userRouter = require('./routes/userRouter');
+const loginRouter = require('./routes/loginRouter');
+const postRouter = require('./routes/postsRouter');
 
 
 const app = express();
@@ -29,6 +32,10 @@ app.use(express.static('public'));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 // passport initialize
+app.use(passport.initialize());
+passport.use(local);
+passport.use(jwtlocal);
+app.use(jwtMiddleware);
 
 // mongoose connect
 mongoose.connect(process.env.MONGO_URI,{
@@ -40,7 +47,10 @@ mongoose.connection.on('err', (err) => {
     console.log("mongoDB err");
 });
 
-// , ... , ..., ... router
+// user, login, post router
+app.use('/users', userRouter);
+app.use('/login', loginRouter);
+app.use('/post', postRouter);
 
 // app.get (front routing)
 app.get('*', (req, res) => {
