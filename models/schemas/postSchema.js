@@ -52,6 +52,11 @@ const postSchema = new Schema({
         required: true,
         index: true
     },
+    // 인당(성인 기준) 1일 가격 (child : 성인 가격의 50%, baby : 성인 가격의 20%)
+    price: {
+        type: Number,
+        required: true
+    },
     // 주 위치(검색에 사용됨)
     main_location: {
         type: String,
