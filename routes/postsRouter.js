@@ -6,9 +6,16 @@ const postService = require('../services/postService');
 const upload = require('../utils/multerConfig');
 
 // 전체 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
+router.get('/getallposts/:nowpage', asyncHandler(async (req,res) => { 
+    const {nowpage, category} = req.params;
+    const result = await postService.getAllposts({nowpage});
+    return res.status(200).json(result);
+}));
+
+// 전체 숙소 중 카테고리가 적용된 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
 router.get('/getallposts/:nowpage/:category', asyncHandler(async (req,res) => { 
     const {nowpage, category} = req.params;
-    const result = await postService.getAllposts({nowpage, category});
+    const result = await postService.getAllpostsCategory({nowpage, category});
     return res.status(200).json(result);
 }));
 

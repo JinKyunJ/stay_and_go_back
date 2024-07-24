@@ -6,17 +6,54 @@ const sharp = require('sharp');
 const path = require('path');
 
 class PostService {
-    // 전체 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
-    async getAllposts({nowpage, category}){
+    // 전체 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 + 페이지 가져오기 (완료)
+    async getAllposts({nowpage}){
+        const page = Number(nowpage);
+        const perPage = 2;
+
+        const posts = await Post.find().sort(({create_at: -1})).skip(perPage * (page - 1))
+            .limit(perPage).populate('author');
+        
+        const total = await Post.countDocuments();
+        const totalPage = Math.ceil(total/perPage);
+    
+        // images base64 인코딩 후 저장
+        const formattedPosts = posts.map(v => ({
+            ...v.toObject(),
+            main_image: {
+                data: v.main_image.data.toString('base64'),
+                contentType: v.main_image.contentType
+            },
+            sub_images: v.sub_images ? v.sub_images.map(i => ({
+                data: i.data.toString('base64'),
+                contentType: i.contentType
+            })) : []
+        }));
+
+        const data = {
+            page: page,
+            perPage: perPage,
+            total: total,
+            posts: formattedPosts,
+            totalPage: totalPage
+        };
+
+        return data;
+    }
+
+    // 전체 숙소 중 카테고리가 적용된 1 페이지 또는 특정 페이지의 숙소 리스트 + 페이지 가져오기
+    async getAllpostsCategory({nowpage, category}){
         const page = Number(nowpage);
         const perPage = 10;
         // category 가 없을 때와 아닐 때 구분하여 처리
         let posts = [];
 
+        console.log("Asdf")
+
         if(category.length > 0){
             // ing
         } else {
-            posts = await Post.find().sort(({createAt: -1})).skip(perPage * (page - 1))
+            posts = await Post.find().sort(({create_at: -1})).skip(perPage * (page - 1))
             .limit(perPage).populate('author');
         }
         
@@ -34,7 +71,7 @@ class PostService {
         return data;
     }
 
-    // 내 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
+    // 내 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 + 페이지 가져오기
     async getMyposts({email, nowpage}){ 
         const author = await User.findOne({email});
         if(!author) { 
@@ -53,7 +90,8 @@ class PostService {
         // pupulate 를 추가하여 User 의 objectID 와 같은 데이터를 JOIN
         const total = await Post.countDocuments({author: author});
         const totalPage = Math.ceil(total/perPage);
-    
+
+
         const data = {
             page: page,
             perPage: perPage,
@@ -64,7 +102,7 @@ class PostService {
         return data;
     }
     
-    // 숙소 쓰기
+    // 숙소 쓰기 (호스트 정보 빼고 완료)
     async writePost(bodyData, imageFiles){
         // 숙소 정보에 추가로 로그인된 유저 이메일 요구
         /*
@@ -111,16 +149,17 @@ class PostService {
         const data = await Post.create({
             // author: author,
             title: bodyData.title,
-            max_adult: bodyData.max_adult,
-            max_child: bodyData.max_child,
-            max_baby: bodyData.max_baby,
+            max_adult: Number(bodyData.max_adult),
+            max_child: Number(bodyData.max_child),
+            max_baby: Number(bodyData.max_baby),
             main_location: bodyData.main_location,
             sub_location: bodyData.sub_location,
             contents: bodyData.contents,
-            room_num: bodyData.room_num,
+            room_num: Number(bodyData.room_num),
             category: bodyData.category,
             host_intro: bodyData.host_intro,
             option: bodyData.option,
+            price: Number(bodyData.price),
             main_image: {
                 data: mainImageBuf,
                 contentType: mainImage.mimetype

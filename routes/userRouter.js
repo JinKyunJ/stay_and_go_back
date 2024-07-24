@@ -10,7 +10,7 @@ const router = Router();
 router.get('/getuser', asyncHandler(async (req, res) => {
     if(!req.user){
         console.log("logout 상태 (server check)")
-        return res.status(200).json({code: 400});
+        return res.status(400).json({code: 400});
     }
     const data = {email: req.user.email, is_admin: req.user.is_admin};
     // 프론트 요청에 대해 최신 닉네임 데이터를 넘겨주기
