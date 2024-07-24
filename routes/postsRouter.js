@@ -19,7 +19,6 @@ router.post('/getposts/page/read', asyncHandler(async (req,res) => {
     return res.status(200).json(result);
 }));
 
-
 // 내가 등록한 숙소 리스트 가져오기
 router.post('/getmyposts', asyncHandler(async (req,res) => { 
     const {email, nowpage} = req.body;
