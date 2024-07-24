@@ -5,21 +5,22 @@ const postService = require('../services/postService');
 // multer 이미지 업로드 설정 가져오기
 const upload = require('../utils/multerConfig');
 
-// 전체 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
-router.get('/getallposts/:nowpage', asyncHandler(async (req,res) => { 
-    const {nowpage, category} = req.params;
-    const result = await postService.getAllposts({nowpage});
+// 숙소 리스트 페이지 정보 read
+router.post('/getposts/page', asyncHandler(async (req,res) => { 
+    const {search, category} = req.body;
+    const result = await postService.getPostsPage({search, category});
     return res.status(200).json(result);
 }));
 
-// 전체 숙소 중 카테고리가 적용된 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
-router.get('/getallposts/:nowpage/:category', asyncHandler(async (req,res) => { 
-    const {nowpage, category} = req.params;
-    const result = await postService.getAllpostsCategory({nowpage, category});
+// 숙소 리스트 read
+router.post('/getposts/page/read', asyncHandler(async (req,res) => {
+    const {nowpage, search, category} = req.body;
+    const result = await postService.getPosts({nowpage, search, category});
     return res.status(200).json(result);
 }));
 
-// 내가 등록한 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 가져오기
+
+// 내가 등록한 숙소 리스트 가져오기
 router.post('/getmyposts', asyncHandler(async (req,res) => { 
     const {email, nowpage} = req.body;
     const result = await postService.getMyposts({email, nowpage});

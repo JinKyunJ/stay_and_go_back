@@ -6,16 +6,33 @@ const sharp = require('sharp');
 const path = require('path');
 
 class PostService {
-    // 전체 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 + 페이지 가져오기 (완료)
-    async getAllposts({nowpage}){
+    // 페이지 정보 read (완료)
+    async getPostsPage({search, category}){
+        // 첫 페이지 진입이므로 1 고정
+        const page = 1;
+        const perPage = 2;
+        // 전체 숙소(검색 x, 카테고리 x) 일 때
+        const total = await Post.countDocuments();
+        const totalPage = Math.ceil(total/perPage);
+
+        const data = {
+            page: page,
+            perPage: perPage,
+            total: total,
+            totalPage: totalPage
+        };
+
+        return {result: data, code: 200, message: `페이지 정보 읽기 완료`};
+    }
+
+    // 숙소 리스트 read (완료)
+    async getPosts({nowpage, search, category}){
         const page = Number(nowpage);
         const perPage = 2;
 
+        // 전체 숙소(검색 x, 카테고리 x)
         const posts = await Post.find().sort(({create_at: -1})).skip(perPage * (page - 1))
             .limit(perPage).populate('author');
-        
-        const total = await Post.countDocuments();
-        const totalPage = Math.ceil(total/perPage);
     
         // images base64 인코딩 후 저장
         const formattedPosts = posts.map(v => ({
@@ -30,45 +47,7 @@ class PostService {
             })) : []
         }));
 
-        const data = {
-            page: page,
-            perPage: perPage,
-            total: total,
-            posts: formattedPosts,
-            totalPage: totalPage
-        };
-
-        return data;
-    }
-
-    // 전체 숙소 중 카테고리가 적용된 1 페이지 또는 특정 페이지의 숙소 리스트 + 페이지 가져오기
-    async getAllpostsCategory({nowpage, category}){
-        const page = Number(nowpage);
-        const perPage = 10;
-        // category 가 없을 때와 아닐 때 구분하여 처리
-        let posts = [];
-
-        console.log("Asdf")
-
-        if(category.length > 0){
-            // ing
-        } else {
-            posts = await Post.find().sort(({create_at: -1})).skip(perPage * (page - 1))
-            .limit(perPage).populate('author');
-        }
-        
-        const total = await Post.countDocuments();
-        const totalPage = Math.ceil(total/perPage);
-    
-        const data = {
-            page: page,
-            perPage: perPage,
-            total: total,
-            posts: posts,
-            totalPage: totalPage
-        };
-
-        return data;
+        return {result: formattedPosts, code: 200, message: `숙소 정보 읽기 완료`};
     }
 
     // 내 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 + 페이지 가져오기
