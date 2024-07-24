@@ -17,14 +17,17 @@ const postSchema = new Schema({
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        index: true
+        index: true,
+        // 현재 user 없이 페이지네이션 및 검색 작업 진행 중 
+        // required: true
     },
     // 숙소 메인 사진(multer, 등록 시 첫 번째 사진이 메인 사진)
+    // 사진이 없을 시 라우터에서 에러처리 진행함
     main_image: {
         data: Buffer,
         contentType: String
     },
-    // 숙소 나머지 사진들(multer)
+    // 숙소 메인 사진 포함 나머지 사진들(multer)
     sub_images: [{
         data: Buffer,
         contentType: String
@@ -85,11 +88,13 @@ const postSchema = new Schema({
     },
     // 호스트 소개 내용
     host_intro: {
-        type: String
+        type: String,
+        required: true
     },
     // 기타 옵션 선택
     option: {
-        type: [String]
+        type: [String],
+        required: true
     },
     // 포스트 생성일
     create_at: {
