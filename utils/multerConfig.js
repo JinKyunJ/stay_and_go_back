@@ -1,6 +1,7 @@
 const multer = require('multer');
 
-// Multer 설정
+
+// Multer 메모리 저장소 설정
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 

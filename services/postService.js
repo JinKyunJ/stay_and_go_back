@@ -1,24 +1,21 @@
 const {User, Post} = require('../models');
 const newDate = require('../utils/newDate');
+const reserveService = require('./reserveService');
 // 이미지 해상도 조절
 const sharp = require('sharp');
 // 이미지 확장자 검사에 쓰일 예정
 const path = require('path');
-const reserveService = require('./reserveService');
+const { S3 } = require('@aws-sdk/client-s3');
+// AWS S3 클라이언트 설정 (v3)
+const s3 = new S3({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+});
 
 class PostService {
-    getNextDate = () => {
-        const date = new Date();
-        date.setDate(date.getDate() + 1);
-        return date;
-    }
-    getDateFormat = (newDate) => {
-        const startYear = newDate.getFullYear();
-        const startMonth = String(newDate.getMonth() + 1).padStart(2, '0');
-        const startDay = String(newDate.getDate()).padStart(2, '0');
-        return `${startYear}-${startMonth}-${startDay}`;
-    }
-
     // 페이지 정보 read (완료)
     async getPostsPage({search, category}){
         // 첫 페이지 진입이므로 1 고정
@@ -93,6 +90,8 @@ class PostService {
         const resultPosts = await reserveService.availableDateCheck(
             {posts: checkPosts, startDate: search.startDate, endDate: search.endDate});
         
+        // 기존 db 저장 방식일 때
+        /*
         // images base64 인코딩 후 저장
         const formattedPosts = resultPosts.result.map(v => ({
             ...v.toObject(),
@@ -105,8 +104,9 @@ class PostService {
                 contentType: i.contentType
             })) : []
         }));
+        */
         
-        return {result: formattedPosts, code: 200, message: `숙소 정보 읽기 완료`};
+        return {result: resultPosts.result /* formattedPosts */, code: 200, message: `숙소 정보 읽기 완료`};
     }
 
     // 내 숙소 중 1 페이지 또는 특정 페이지의 숙소 리스트 + 페이지 가져오기
@@ -122,7 +122,7 @@ class PostService {
 
         // skip(n): 처음 n개의 요소를 건너뜀
         // limit(n): n개의 요소만 가져옴
-        const posts = await Post.find({author: author}).sort(({createAt: -1})).skip(perPage * (page - 1))
+        const posts = await Post.find({author: author}).sort(({create_at: -1})).skip(perPage * (page - 1))
             .limit(perPage).populate('author');
 
         // pupulate 를 추가하여 User 의 objectID 와 같은 데이터를 JOIN
@@ -151,6 +151,8 @@ class PostService {
             throw error;
         }*/
 
+        // 기존 db 저장 방식
+        /*
         // 메인, 서브 이미지 추출
         const mainImage = imageFiles[0];
         const subImages = imageFiles;
@@ -159,7 +161,7 @@ class PostService {
         // path.extname 과 includes를 사용하여 false 인 배열 요소들을 모음.
         const nonImageFiles = imageFiles.filter(v => {
             const ext = path.extname(v.originalname).toLowerCase();
-            return !['.jpg', '.jpeg', '.png', '.gif'].includes(ext);
+            return !['.jpg', '.jpeg', '.png'].includes(ext);
         });
         if (nonImageFiles.length > 0) {
             const error = new Error();
@@ -167,10 +169,11 @@ class PostService {
             throw error;
         }
 
-        // 이미지 처리: width: 1200 보다 클 때 리사이즈 및 압축
+        // 이미지 처리: width: 800 보다 클 때 리사이즈 및 압축
         const imageProcessing = async (imageBuffer) => {
-            return sharp(imageBuffer).resize({width: 1200, withoutEnlargement: true})
-                .jpeg({quality: 90})
+            return sharp(imageBuffer).resize({width: 800, withoutEnlargement: true})
+                .withMetadata(false)
+                .webp({quality: 70})
                 .toBuffer(); // 처리 후 버퍼 반환
         };
 
@@ -180,9 +183,52 @@ class PostService {
         const processedSubImages = await Promise.all(
             subImages.map(async (v) => {
                 const processedBuf = await imageProcessing(v.buffer);
-                return { data: processedBuf, contentType: v.mimetype };
+                return { data: processedBuf, contentType: 'image/webp' };
             })
         );
+        */
+
+        // 이미지 처리 및 가공 (용량 줄이고 리사이징 등) 은 동일함(db, s3 업로드할 때)
+        // 단 return 할 때만 주의(s3 에 맞는 프로퍼티 체크)
+        const imageProcessing = async (imageBuffer) => {
+            return sharp(imageBuffer).resize({width: 800, withoutEnlargement: true})
+                .withMetadata(false)
+                .webp({quality: 70})
+                .toBuffer(); // 처리 후 버퍼 반환
+        };
+        
+        // 파일들을 S3에 업로드
+        const keyFiles = [];
+        const s3Uploads = imageFiles.map(async (v) => {
+            const processedBuf = await imageProcessing(v.buffer)
+
+            const fileKey = `uploads/${Date.now()}_${path.basename(v.originalname)}`;
+            keyFiles.push(fileKey);
+            const params = {
+                Bucket: 'gwsimagebucket2',
+                Key: fileKey,
+                Body: processedBuf,
+                ContentType: 'image/webp',
+                ACL: 'public-read'
+            };
+
+            return s3.putObject(params);
+        });
+
+        const uploadResults = await Promise.all(s3Uploads);
+
+        // s3 추가 정보
+        const imageUrl = uploadResults.map((v) => {
+            return `https://${'gwsimagebucket2'}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
+        });
+        const fixedImageUrl = keyFiles.map((v,i) => {
+            return imageUrl[i].concat(v)
+        })
+        bodyData.imageUrl = fixedImageUrl;
+
+        // s3 이미지 url
+        const main_image = bodyData.imageUrl[0];
+        const sub_images = bodyData.imageUrl;
 
         const data = await Post.create({
             // author: author,
@@ -198,11 +244,16 @@ class PostService {
             host_intro: bodyData.host_intro,
             option: bodyData.option,
             price: Number(bodyData.price),
+            main_image: main_image,
+            sub_images: sub_images
+            // 기존 db 저장 방식
+            /*
             main_image: {
                 data: mainImageBuf,
-                contentType: mainImage.mimetype
+                contentType: 'image/webp'
             },
             sub_images: processedSubImages
+            */
         });
         return {data: data, code: 200, message: `숙소 등록 완료`};
     };

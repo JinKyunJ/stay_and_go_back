@@ -23,6 +23,17 @@ const postSchema = new Schema({
     },
     // 숙소 메인 사진(multer, 등록 시 첫 번째 사진이 메인 사진)
     // 사진이 없을 시 라우터에서 에러처리 진행함
+    // s3 v3 저장 방식
+    main_image: {
+        type: String, // URL 저장
+        required: true
+    },
+    // 숙소 서브 사진들
+    sub_images: [{
+        type: String // URL 저장
+    }],
+    // db 저장 방식
+    /*
     main_image: {
         data: Buffer,
         contentType: String
@@ -32,6 +43,7 @@ const postSchema = new Schema({
         data: Buffer,
         contentType: String
     }],
+    */
     // 숙소 타이틀
     title: {
         type: String,
