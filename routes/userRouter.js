@@ -10,13 +10,14 @@ const router = Router();
 router.get('/getuser', asyncHandler(async (req, res) => {
     if(!req.user){
         console.log("logout 상태 (server check)")
-        return res.status(400).json({code: 400});
+        return res.status(200).json({code: 411, message: "logout 상태 입니다.(server chk)"});
     }
-    const data = {email: req.user.email, is_admin: req.user.is_admin};
-    // 프론트 요청에 대해 최신 닉네임 데이터를 넘겨주기
+    const data = {email: req.user.email, name: req.user.name, is_admin: req.user.is_admin};
+    // 프론트 요청에 대해 최신 닉네임, 연락처 데이터를 넘겨주기(수정이 가능한 데이터 이므로)
     const result = await userService.findByEmail({email: data.email});
-    data.name = result.data.name;
-    return res.status(200).json({code: 200, data: data});
+    data.nickname = result.data.nickname;
+    data.phone = result.data.phone;
+    return res.status(200).json({code: 200, data: data, message: "login 상태 입니다.(server chk)"});
 }));
 
 // JWT LOGOUT : 쿠키에 있는 토큰을 비우고, 만료 기간 0 으로 설정
