@@ -5,7 +5,7 @@ const verifySchema = new Schema({
         type: String,
         required: true
     },
-    // 인증 번호
+    // 인증 요청 이메일
     data: {
         type: String,
         required: true
@@ -14,6 +14,11 @@ const verifySchema = new Schema({
     is_verified: {
         type: Boolean,
         default: false
+    },
+    // 인증 코드 (보은님 에러 발견으로 추가 !)
+    secret: {
+        type: String,
+        required: true
     }
 },{
     timestamps: true

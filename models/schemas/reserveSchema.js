@@ -5,7 +5,7 @@ const reserveSchema = new Schema({
     // 예약한 숙박 포스트 nanoid
     post_nanoid: {
         type: String,
-        require: true,
+        required: true,
         index: true
     },
     // 예약자 정보
