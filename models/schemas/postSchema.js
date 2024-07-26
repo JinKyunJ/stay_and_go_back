@@ -103,11 +103,6 @@ const postSchema = new Schema({
         type: String,
         required: true
     },
-    // 기타 옵션 선택
-    option: {
-        type: [String],
-        required: true
-    },
     // 포스트 생성일
     create_at: {
         type: String,

@@ -240,9 +240,8 @@ class PostService {
             sub_location: bodyData.sub_location,
             contents: bodyData.contents,
             room_num: Number(bodyData.room_num),
-            category: bodyData.category,
+            category: bodyData.category.length > 0 ? bodyData.category : "전체",
             host_intro: bodyData.host_intro,
-            option: bodyData.option,
             price: Number(bodyData.price),
             main_image: main_image,
             sub_images: sub_images
