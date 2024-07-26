@@ -19,6 +19,8 @@ const local = new LocalStrategy(config, async(email, password, done) => {
             Object.assign(error, {code: 404, message: "회원을 찾을 수 없습니다."});
             throw error;
         }
+        console.log(email, password);
+
         // password 일치 여부 검사
         // sha256 단방향 해시 비밀번호 사용
         const hash = crypto.createHash('sha256').update(password).digest('hex');
