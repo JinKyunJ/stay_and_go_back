@@ -72,12 +72,6 @@ class UserService {
 
     // 인증 요청 분리 *(비밀번호 찾기 - 이메일이 존재해야 다음 스텝으로 넘어가야 함) (완료)
     async pwfindVerify({email}){
-        // 이메일 형식 체크
-        if(!/^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/.test(email)){
-            const error = new Error();
-            Object.assign(error, {code: 400, message: "이메일 형식을 다시 확인해주세요."})
-            throw error;
-        }
         // 인증 코드 받는 이메일이 이미 존재하는지 검사
         // 이메일 인증이 정식으로 들어갈 때 createUser 에 있는 이메일 존재 검사는 필요없음.
         const user = await User.findOne({email});
@@ -115,12 +109,6 @@ class UserService {
 
     // 회원 가입 메일 인증 코드 발급 (완료)
     async joinVerify({email}){
-        // 이메일 형식 체크
-        if(!/^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/.test(email)){
-            const error = new Error();
-            Object.assign(error, {code: 400, message: "이메일 형식을 다시 확인해주세요."});
-            throw error;
-        }
         // 인증 코드 받는 이메일이 이미 존재하는지 검사
         // 이메일 인증이 정식으로 들어갈 때 createUser 에 있는 이메일 존재 검사는 필요없음.
         const user = await User.findOne({email});
@@ -157,13 +145,6 @@ class UserService {
 
     // 인증 코드 확인 요청 (완료)
     async joinVerifyConfirm({email, secret}){
-        // 이메일 형식 체크
-        if(!/^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/.test(email)){
-            const error = new Error();
-            Object.assign(error, {code: 400, message: "이메일 형식을 다시 확인해주세요."})
-            throw error;
-        }
-
         // verify document find
         // 6 자리는 회원가입 인증 코드 요청 길이
         let verify;

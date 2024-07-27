@@ -5,6 +5,9 @@ const userService = require('../services/userService');
 const reqUserCheck = require('../middlewares/reqUserCheck');
 // 현재 사용자가 관리자인지 체크하는 미들웨어 추가
 const reqUserAdminCheck = require('../middlewares/reqUserAdminCheck');
+const emailCheck = require('../middlewares/emailCheck');
+const passport = require('passport');
+const jwtMiddleware = require('../middlewares/jwtMiddleware');
 
 const router = Router();
 
@@ -26,6 +29,7 @@ router.get('/getuser', asyncHandler(async (req, res) => {
     const result = await userService.findByEmail({email: data.email});
     data.nickname = result.data.nickname;
     data.phone = result.data.phone;
+    data.is_admin = result.data.is_admin;
     return res.status(200).json({code: 200, data: data, message: "login 상태 입니다.(server chk)"});
 }));
 
@@ -54,7 +58,7 @@ router.get('/alluserdata', reqUserAdminCheck, asyncHandler(async (req, res) => {
 }));
 
 // findOne by email (완료)
-router.post('/email', asyncHandler(async (req, res) => {
+router.post('/email', reqUserCheck, asyncHandler(async (req, res) => {
     const {email} = req.body;
     const result = await userService.findByEmail({email});
     return res.status(200).json(result);
@@ -82,21 +86,24 @@ router.delete('/delete', reqUserCheck, asyncHandler(async (req,res) => {
 }));
 
 // 회원가입 시 이메일 인증 코드 발급 진행 (완료)
-router.post('/verify', asyncHandler(async (req, res) => {
+// feedback 반영
+router.post('/verify', emailCheck, asyncHandler(async (req, res) => {
     const {email} = req.body;
     const result = await userService.joinVerify({email});
     return res.status(201).json(result);
 }));
 
 // 회원가입 시 이메일 인증 확인 요청 진행 (완료)
-router.post('/verify/confirm', asyncHandler(async (req, res) => {
+// feedback 반영
+router.post('/verify/confirm', emailCheck, asyncHandler(async (req, res) => {
     const {email, secret} = req.body;
     const result = await userService.joinVerifyConfirm({email, secret});
     return res.status(200).json(result);
 }));
 
 // 비밀번호 찾기 시 이메일 인증 요청 (완료)
-router.post('/verify/findpw', asyncHandler(async (req, res) => {
+// feedback 반영
+router.post('/verify/findpw', emailCheck, asyncHandler(async (req, res) => {
     const {email} = req.body;
     const result = await userService.pwfindVerify({email});
     return res.status(200).json(result);
