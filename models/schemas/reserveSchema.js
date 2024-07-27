@@ -1,10 +1,13 @@
 const {Schema} = require('mongoose');
+const {nanoid} = require('nanoid');
+// 추가 또는 수정될 때마다 날짜 데이터를 만들어주는 newDate()
+const newDate = require('../../utils/newDate');
 
 const reserveSchema = new Schema({
-    // post_nanoid + author = primary key
-    // 예약한 숙박 포스트 nanoid
-    post_nanoid: {
+    // primary key
+    nanoid: {
         type: String,
+        default: () => { return nanoid() },
         required: true,
         index: true
     },

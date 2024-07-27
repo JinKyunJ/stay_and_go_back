@@ -296,12 +296,7 @@ class PostService {
             Object.assign(error, {code: 403, message: "숙소 작성자가 아닙니다. 다시 확인해주세요."});
             throw error;
         }
-        // AWS 버킷 사진 제거 작업
-        let deleteFiles = [];
-        // sub_images 배열의 모든 값과 메인 이미지 를 push 한다.
-        deleteFiles.push(...post.sub_images, post.main_image);
-        await deleteImageFromAWS(deleteFiles);
-
+        // AWS 버킷 사진 제거 작업 취소 ! : "지난 여행" 으로 url 은 남아야 함
 
         await Post.deleteOne({nanoid});
         return {code: 200, message: `숙소 삭제 완료`};

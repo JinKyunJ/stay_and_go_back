@@ -59,7 +59,11 @@ router.put('/put', reqUserCheck, upload.array('images'), asyncHandler(async (req
     return res.status(200).json(result);
 }));
 
-// 숙소 삭제 (완료) (util/deleteImageFromAWS 참고)
+// 숙소 삭제 (완료) 
+// del? => reserve 는 삭제하지 않는다., 삭제 할 수도 없음 
+// => (지난 여행으로 남아야 하고, 애초에 reserve 에 추가될 때에는 
+//     외래 키가 들어가지 않고 실제 값들이 들어갈 것임 !!)
+// => 버킷에서 실제 이미지도 지우지 않는다. (마찬가지로 지난 여행에서 확인해야함.)
 router.delete('/delete', reqUserCheck, asyncHandler(async (req, res) => {
     const {nanoid} = req.body;
     const email = req.user.email;
