@@ -5,14 +5,14 @@ const postService = require('../services/postService');
 // multer 이미지 업로드 설정 가져오기
 const upload = require('../utils/multerConfig');
 
-// 숙소 리스트 페이지 정보 read
+// 숙소 리스트 페이지 정보 read (완료)
 router.post('/getposts/page', asyncHandler(async (req,res) => { 
     const {search, category} = req.body;
     const result = await postService.getPostsPage({search, category});
     return res.status(200).json(result);
 }));
 
-// 숙소 리스트 read
+// 숙소 리스트 read (완료)
 router.post('/getposts/page/read', asyncHandler(async (req,res) => {
     const {nowpage, search, category} = req.body;
     const result = await postService.getPosts({nowpage, search, category});
@@ -34,7 +34,7 @@ router.get('/read/:nanoid', asyncHandler(async (req, res) => {
 }));
 
 
-// 숙소 작성
+// 숙소 작성 (완료)
 router.post('/write', upload.array('images'), asyncHandler(async (req, res) => {
     // 숙소 정보에 추가로 로그인된 사용자 email 이 있어야 함 *front 에서도 체크해야 함
     const bodyData = req.body;

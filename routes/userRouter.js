@@ -3,10 +3,12 @@ const asyncHandler = require('../middlewares/async-handler');
 const userService = require('../services/userService');
 // 현재 사용자가 로그인했는지 체크하는 미들웨어 적용
 const reqUserCheck = require('../middlewares/reqUserCheck');
+// 현재 사용자가 관리자인지 체크하는 미들웨어 추가
+const reqUserAdminCheck = require('../middlewares/reqUserAdminCheck');
 
 const router = Router();
 
-// 서버에 로그인한 정보 확인 시 전달 라우터
+// 서버에 로그인한 정보 확인 시 전달 라우터 (완료)
 router.get('/getuser', asyncHandler(async (req, res) => {
     if(!req.user){
         console.log("logout 상태 (server check)")
@@ -21,7 +23,7 @@ router.get('/getuser', asyncHandler(async (req, res) => {
 }));
 
 // JWT LOGOUT : 쿠키에 있는 토큰을 비우고, 만료 기간 0 으로 설정
-// post 요청으로 url 직접 접근 차단
+// post 요청으로 url 직접 접근 차단 (완료)
 router.post('/logout', reqUserCheck, asyncHandler(async (req, res) => {
     res.cookie('token', null, {
         maxAge: 0
@@ -29,22 +31,30 @@ router.post('/logout', reqUserCheck, asyncHandler(async (req, res) => {
     return res.status(200).json({code: 200, message: "정상적으로 로그아웃되었습니다."});
 }));
 
-/* create */
+/* create (완료) */ 
 router.post('/', asyncHandler(async (req, res) => {
     const bodyData = req.body;
     const result = await userService.createUser(bodyData);
     return res.status(201).json(result);
 }));
 
+// 유저 아이디 조회 
+router.post('/findid', asyncHandler(async (req, res) => {
+    const bodyData = req.body;
+    console.log(bodyData)
+    const result = await userService.findUserID(bodyData);
+    return res.status(200).json(result);
+}));
+
 // 전체 유저 조회(중요 데이터)
-// post 요청으로 url 직접 접근 차단
-router.post('/alluserdata', asyncHandler(async (req, res) => {
+router.get('/alluserdata', reqUserAdminCheck, asyncHandler(async (req, res) => {
     const result = await userService.findAllUser();
     return res.status(200).json(result);
 }));
 
 // findOne by email
 router.post('/email', asyncHandler(async (req, res) => {
+    console.log(req.body)
     const {email} = req.body;
     const result = await userService.findByEmail({email});
     return res.status(200).json(result);

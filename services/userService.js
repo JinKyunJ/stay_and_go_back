@@ -30,6 +30,14 @@ class UserService {
             Object.assign(error, {code: 400, message: "중복된 닉네임입니다. 닉네임을 변경해주세요."});
             throw error;
         };
+        // 전화번호 중복 확인
+        const {phone} = bodyData;
+        const phoneUser = await User.findOne({phone});
+        if(phoneUser){
+            const error = new Error();
+            Object.assign(error, {code: 400, message: "중복된 전화번호입니다. 전화번호를 변경해주세요."});
+            throw error;
+        };
 
         // 이메일 인증이 되었고 회원가입을 진행하므로 더 이상 쓸모가 없으므로 제거
         await Verify.deleteMany(verify);
@@ -46,6 +54,18 @@ class UserService {
         });
         return {code: 200, message: `${bodyData.email} 계정으로 회원가입이 성공하였습니다.`};
     }
+
+    async findUserID(bodyData){
+        const {name, phone} = bodyData;
+        // name, phone 확인
+        const user = await User.findOne({name, phone});
+        if(!user){
+            const error = new Error();
+            Object.assign(error, {data: [], code: 404, message: "이름과 전화번호로 조회된 회원이 없습니다."})
+            throw error;
+        }
+        return {data: user.email, code: 200, message: "유저 ID가 성공적으로 조회되었습니다. ID를 확인해주세요!"};
+    };
 
     // 인증 요청 분리 *(비밀번호 찾기 - 이메일이 존재해야 다음 스텝으로 넘어가야 함)
     async pwfindVerify({email}){
