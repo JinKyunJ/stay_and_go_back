@@ -38,59 +38,56 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(201).json(result);
 }));
 
-// 유저 아이디 조회 
+// 유저 아이디 조회 (완료)
 router.post('/findid', asyncHandler(async (req, res) => {
     const bodyData = req.body;
-    console.log(bodyData)
     const result = await userService.findUserID(bodyData);
     return res.status(200).json(result);
 }));
 
-// 전체 유저 조회(중요 데이터)
+// 전체 유저 조회(중요 데이터 -> 관리자) (완료)
 router.get('/alluserdata', reqUserAdminCheck, asyncHandler(async (req, res) => {
     const result = await userService.findAllUser();
     return res.status(200).json(result);
 }));
 
-// findOne by email
+// findOne by email (완료)
 router.post('/email', asyncHandler(async (req, res) => {
-    console.log(req.body)
     const {email} = req.body;
     const result = await userService.findByEmail({email});
     return res.status(200).json(result);
 }));
 
-// update by email
+// update by email (완료)
 router.put('/', asyncHandler(async (req, res) => {
     const {email} = req.body;
     const bodyData = req.body;
-
     const result = await userService.updateByEmail({email}, bodyData);
     return res.status(200).json(result);
 }));
 
-// delete by email
-router.post('/deleteByEmail', reqUserCheck, asyncHandler(async (req,res) => {
+// delete by email (완료)
+router.delete('/delete', asyncHandler(async (req,res) => {
     const {email} = req.body;
     const result = await userService.deleteByEmail({email});
     return res.status(200).json(result);
 }));
 
-// 회원가입 시 이메일 인증 코드 발급 진행
+// 회원가입 시 이메일 인증 코드 발급 진행 (완료)
 router.post('/verify', asyncHandler(async (req, res) => {
     const {email} = req.body;
     const result = await userService.joinVerify({email});
     return res.status(201).json(result);
 }));
 
-// 회원가입 시 이메일 인증 확인 요청 진행
+// 회원가입 시 이메일 인증 확인 요청 진행 (완료)
 router.post('/verify/confirm', asyncHandler(async (req, res) => {
     const {email, secret} = req.body;
     const result = await userService.joinVerifyConfirm({email, secret});
     return res.status(200).json(result);
 }));
 
-// 비밀번호 찾기 시 이메일 인증 요청
+// 비밀번호 찾기 시 이메일 인증 요청 (완료)
 router.post('/verify/findpw', asyncHandler(async (req, res) => {
     const {email} = req.body;
     const result = await userService.pwfindVerify({email});
