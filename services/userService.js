@@ -10,6 +10,7 @@ class UserService {
     /* create 완료 */
     async createUser(bodyData){
         const {email} = bodyData;
+        
         // 이메일 인증이 정상적으로 되었는지(is_verified === true) 검사
         const verify = await Verify.findOne({data: email, code: code.VERIFYCODE});
         if(!verify){
@@ -22,6 +23,7 @@ class UserService {
             Object.assign(error, {code: 401, message: "이메일 인증이 되지 않았습니다. 메일에서 인증 코드를 확인해주세요."});
             throw error;
         }
+            
         // 닉네임 중복 확인
         const {nickname} = bodyData;
         const nameUser = await User.findOne({nickname: nickname});

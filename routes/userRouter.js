@@ -8,6 +8,13 @@ const reqUserAdminCheck = require('../middlewares/reqUserAdminCheck');
 
 const router = Router();
 
+/* create (완료) */ 
+router.post('/', asyncHandler(async (req, res) => {
+    const bodyData = req.body;
+    const result = await userService.createUser(bodyData);
+    return res.status(201).json(result);
+}));
+
 // 서버에 로그인한 정보 확인 시 전달 라우터 (완료)
 router.get('/getuser', asyncHandler(async (req, res) => {
     if(!req.user){
@@ -31,12 +38,7 @@ router.post('/logout', reqUserCheck, asyncHandler(async (req, res) => {
     return res.status(200).json({code: 200, message: "정상적으로 로그아웃되었습니다."});
 }));
 
-/* create (완료) */ 
-router.post('/', asyncHandler(async (req, res) => {
-    const bodyData = req.body;
-    const result = await userService.createUser(bodyData);
-    return res.status(201).json(result);
-}));
+
 
 // 유저 아이디 조회 (완료)
 router.post('/findid', asyncHandler(async (req, res) => {
@@ -59,16 +61,22 @@ router.post('/email', asyncHandler(async (req, res) => {
 }));
 
 // update by email (완료)
-router.put('/', asyncHandler(async (req, res) => {
+router.put('/', reqUserCheck, asyncHandler(async (req, res) => {
     const {email} = req.body;
+    if(email !== req.user.email){
+        return res.status(403).json({code: 403, message: "타인의 정보는 수정할 수 없습니다."});
+    }
     const bodyData = req.body;
     const result = await userService.updateByEmail({email}, bodyData);
     return res.status(200).json(result);
 }));
 
 // delete by email (완료)
-router.delete('/delete', asyncHandler(async (req,res) => {
+router.delete('/delete', reqUserCheck, asyncHandler(async (req,res) => {
     const {email} = req.body;
+    if(!req.user.is_admin && email !== req.user.email){
+        return res.status(403).json({code: 403, message: "타인의 정보는 삭제할 수 없습니다."});
+    }
     const result = await userService.deleteByEmail({email});
     return res.status(200).json(result);
 }));
