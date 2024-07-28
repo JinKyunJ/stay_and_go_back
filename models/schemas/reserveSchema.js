@@ -11,42 +11,77 @@ const reserveSchema = new Schema({
         required: true,
         index: true
     },
-    // 예약자 정보
+    // (search -> in ) 예약자 정보 (나의여행 탭에서의 KEY)
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
         index: true
     },
-    // 숙박 시작 일자
+    // (post) 호스트 이메일 (호스트계정으로 예약자관리 페이지에서의 KEY)
+    host_email: {
+        type: String,
+        required: true,
+        index: true
+    },
+    // (post) 호스트 이름
+    host_name: {
+        type: String,
+        required: true
+    },
+    // (post) 호스트 연락처
+    host_phone: {
+        type: String,
+        required: true
+    },
+    // (post) 메인 이미지
+    main_image: {
+        type: String, // URL 저장
+        required: true
+    },
+    // (post) 서브 이미지
+    sub_images: {
+        type: String
+    },
+    // (post) 주요 위치
+    main_location: {
+        type: String,
+        required: true
+    },
+    // (post) 상세 주소
+    sub_location: {
+        type: String,
+        required: true
+    },
+    // (search -> in ) 총 금액
+    amount: {
+        type: Number,
+        required: true
+    },
+    // (search -> in ) 숙박 시작 일자
     start_date: {
         type: String,
         required: true,
         index: true
     },
-    // 숙박 끝 일자
+    // (search -> in ) 숙박 끝 일자
     end_date: {
         type: String,
         required: true,
         index: true
     },
-    // 예약한 성인 인원 수
+    // (search -> in ) 예약한 성인 인원 수
     adult: {
         type: Number,
         required: true
     },
-    // 예약한 어린이 인원 수
+    // (search -> in ) 예약한 어린이 인원 수
     child: {
         type: Number
     },
-    // 예약한 유아 인원 수
+    // (search -> in ) 예약한 유아 인원 수
     baby: {
         type: Number
-    },
-    // 총 금액
-    amount: {
-        type: Number,
-        required: true
     },
     // 예약 생성일
     create_at: {
