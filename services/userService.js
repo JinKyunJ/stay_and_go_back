@@ -1,4 +1,4 @@
-const {User, Verify, Post} = require('../models');
+const {User, Verify, Post, Reserve} = require('../models');
 const code = require('../utils/data/code');
 const generateRandomValue = require('../utils/generate-random-value');
 const sendEmail = require('../utils/nodemailer');
@@ -267,8 +267,7 @@ class UserService {
     }
 
     // delete by email
-    // 회원 탈퇴 시 1. 작성한 숙소 데이터 삭제 !! 
-    // (예약 데이터가 있는 경우 삭제 불가(front check) -> 관리자가 삭제해야 함 OR 예약 데이터 도 추가 삭제)
+    // 회원 탈퇴 시 유저 -> 외래 키 -> post, reserve 제거
     async deleteByEmail({email}) {
         const user = await User.findOne({email});
         if(!user){
@@ -277,6 +276,7 @@ class UserService {
             throw error;
         } else {
             await Post.deleteMany({author: user});
+            await Reserve.deleteMany({author: user});
             await User.deleteOne(user);
             
             return {code: 200, message: `${email} 사용자 삭제 동작 완료`};
