@@ -83,6 +83,13 @@ const reserveSchema = new Schema({
     baby: {
         type: Number
     },
+    // 지난 여행인지 확인 boolean
+    is_ing: {
+        type: Boolean,
+        required: true,
+        index: true,
+        default: false
+    },
     // 예약 생성일
     create_at: {
         type: String,
