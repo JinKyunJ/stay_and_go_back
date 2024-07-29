@@ -67,6 +67,7 @@ class UserService {
             Object.assign(error, {data: [], code: 404, message: "이름과 전화번호로 조회된 회원이 없습니다."})
             throw error;
         }
+        console.log(user);
         return {data: user.email, code: 200, message: "유저 ID가 성공적으로 조회되었습니다. ID를 확인해주세요!"};
     };
 
@@ -168,6 +169,7 @@ class UserService {
                 throw error;
             }
         }
+
         
         // 인증 코드 비교 진행( 정상 인증 코드로 판단 시 is_verified 를 true 로 변경하여 회원가입 절차가 가능하도록 함)
         if(secret === verify.secret){
@@ -208,7 +210,7 @@ class UserService {
 
     // findOne by email
     async findByEmail({email}) {
-        const user = await User.findOne({email}, 'email name nickname phone photo nanoid create_at update_at');
+        const user = await User.findOne({email}, 'email name nickname phone photo nanoid is_admin create_at update_at');
         if(!user){
             const error = new Error();
             Object.assign(error, {data: [], code: 404, message: "이메일로 조회된 회원이 없습니다."})

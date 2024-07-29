@@ -66,11 +66,8 @@ router.post('/email', reqUserCheck, asyncHandler(async (req, res) => {
 }));
 
 // update by email (완료)
-router.put('/', reqUserCheck, asyncHandler(async (req, res) => {
+router.put('/', asyncHandler(async (req, res) => {
     const {email} = req.body;
-    if(email !== req.user.email){
-        return res.status(403).json({code: 403, message: "타인의 정보는 수정할 수 없습니다."});
-    }
     const bodyData = req.body;
     const result = await userService.updateByEmail({email}, bodyData);
     return res.status(200).json(result);
