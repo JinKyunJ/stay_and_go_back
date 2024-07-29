@@ -9,7 +9,7 @@ class PostService {
     async getPostsPage({search, category, mymode, email}){
         // 첫 페이지 진입이므로 1 고정
         const page = 1;
-        const perPage = 2;
+        const perPage = 5;
         
         const query = {
             $and: [
@@ -64,7 +64,7 @@ class PostService {
     // 숙소 리스트 read
     async getPosts({nowpage, search, category, mymode, email}){
         const page = Number(nowpage);
-        const perPage = 2;
+        const perPage = 5;
 
         const query = {
             $and: [

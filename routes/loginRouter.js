@@ -25,8 +25,6 @@ const router = Router();
 // loginCheck : 이메일 또는 패스워드 입력 확인, 이메일 형식 체크
 router.post('/', loginCheck, passport.authenticate('local', {session: false}), (req, res, next) => {
     // 로그인 성공 했을 때 클라이언트에 줄 토큰에다가 signature(secret) 으로 서명 후 전달함.
-    console.log("asdf")
-    console.log(req.user);
     const token = setUserToken(res, req.user);
 
     // 관리자 계정 로그인 시 알림 팝업 확인
