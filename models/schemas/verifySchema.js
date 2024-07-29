@@ -1,6 +1,6 @@
 const {Schema} = require('mongoose');
 const verifySchema = new Schema({
-    // 인증 번호 발급 코드(비밀번호 찾기, 회원가입 시 해당 스키마 사용)
+    // 인증 번호 발급 코드(비밀번호 찾기, 회원가입 에서 요청한건지 구분하기 위함)
     code: {
         type: String,
         required: true

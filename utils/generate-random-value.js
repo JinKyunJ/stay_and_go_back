@@ -4,7 +4,7 @@ module.exports = (code) => {
     let text = "";
     if(code === Code.PASSWORD){
         const possible = Code.PASSWORD_POSSIBLE;
-        for(let i = 0; i < 12; i++ ) {
+        for(let i = 0; i < 8; i++ ) {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
     }

@@ -18,8 +18,7 @@ const postSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
         index: true,
-        // 현재 user 없이 페이지네이션 및 검색 작업 진행 중 
-        // required: true
+        required: true
     },
     // 숙소 메인 사진(multer, 등록 시 첫 번째 사진이 메인 사진)
     // 사진이 없을 시 라우터에서 에러처리 진행함
