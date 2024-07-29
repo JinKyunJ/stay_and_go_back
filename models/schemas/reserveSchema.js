@@ -18,6 +18,11 @@ const reserveSchema = new Schema({
         required: true,
         index: true
     },
+    // (post) 타이틀
+    title: {
+        type: String,
+        required: true
+    },
     // (post) 호스트 이메일 (호스트계정으로 예약자관리 페이지에서의 KEY)
     host_email: {
         type: String,
@@ -25,7 +30,7 @@ const reserveSchema = new Schema({
         index: true
     },
     // (post) 호스트 이름
-    host_name: {
+    host_nickname: {
         type: String,
         required: true
     },
@@ -53,7 +58,8 @@ const reserveSchema = new Schema({
         type: String,
         required: true
     },
-    // (search -> in ) 총 금액
+    // (search -> in 인원수 확인 후
+    //            + post 의 가격(성인 : 그대로, 어린이 : 성인 50%, 아기: 성인 20% 계산) 총 금액
     amount: {
         type: Number,
         required: true
@@ -83,7 +89,7 @@ const reserveSchema = new Schema({
     baby: {
         type: Number
     },
-    // 지난 여행인지 확인 boolean
+    // 지난 여행인지 확인 boolean (to : 처음 생성 때는 입력 필요 없어요 !)
     is_ing: {
         type: Boolean,
         required: true,

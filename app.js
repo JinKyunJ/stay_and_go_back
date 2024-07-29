@@ -13,6 +13,7 @@ const jwtMiddleware = require('./middlewares/jwtMiddleware');
 const userRouter = require('./routes/userRouter');
 const loginRouter = require('./routes/loginRouter');
 const postRouter = require('./routes/postsRouter');
+const reserveRouter = require('./routes/reserveRouter');
 // multer 설정 가져오기
 const upload = require('./utils/multerConfig');
 
@@ -52,6 +53,7 @@ mongoose.connection.on('err', (err) => {
 app.use('/users', userRouter);
 app.use('/login', loginRouter);
 app.use('/post', postRouter);
+app.use('/reserve', reserveRouter);
 
 // app.get (front routing)
 app.get('*', (req, res) => {
