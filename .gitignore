@@ -1,5 +1,5 @@
 .env
 node_modules
 # 배포 시에는 public 해제 후 마지막 빌드하고 나서 server 만 git clone 하면 됨
-# public
+public
 .gitmessage.txt
