@@ -202,13 +202,13 @@ class UserService {
     // 전체 유저 조회(관리자)
     async findAllUser(){
         // 원하는 속성들만 찾기
-        const users = await User.find({}, 'email name nickname phone nanoid create_at update_at');
+        const users = await User.find({}, 'email name nickname phone photo nanoid create_at update_at');
         return users;
     }
 
     // findOne by email
     async findByEmail({email}) {
-        const user = await User.findOne({email}, 'email name nickname phone nanoid create_at update_at');
+        const user = await User.findOne({email}, 'email name nickname phone photo nanoid create_at update_at');
         if(!user){
             const error = new Error();
             Object.assign(error, {data: [], code: 404, message: "이메일로 조회된 회원이 없습니다."})

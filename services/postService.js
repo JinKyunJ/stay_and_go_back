@@ -88,14 +88,14 @@ class PostService {
             checkPosts = await Post.find(query).sort(({create_at: -1})).skip(perPage * (page - 1))
             .limit(perPage).populate({
                 path: 'author',
-                select: "email name nickname phone"
+                select: "email name nickname phone photo"
             });
         } else {
             const user = await User.findOne({email});
             checkPosts = await Post.find({author: user}).sort(({create_at: -1})).skip(perPage * (page - 1))
             .limit(perPage).populate({
                 path: 'author',
-                select: "email name nickname phone"
+                select: "email name nickname phone photo"
             });
         }
          
@@ -184,7 +184,7 @@ class PostService {
             sub_images = [];
         }
 
-        const author = await User.findOne({email: bodyData.email}, "email name nickname phone");
+        const author = await User.findOne({email: bodyData.email}, "email name nickname phone photo");
         const data = await Post.create({
             author: author,
             title: bodyData.title,
@@ -219,7 +219,7 @@ class PostService {
         // 이미 로그인된 사용자가 해당 서비스 함수로 진입할텐데 굳이 다시 확인 불필요함
         const post = await Post.findOne({nanoid: bodyData.nanoid}).populate('author').populate({
             path: 'author',
-            select: "email name nickname phone"
+            select: "email name nickname phone photo"
         });
         if(!post) { 
             const error = new Error();
@@ -308,7 +308,7 @@ class PostService {
         // 이미 로그인된 사용자가 해당 서비스 함수로 진입할텐데 굳이 다시 확인 불필요함
         const post = await Post.findOne({nanoid}).populate({
             path: 'author',
-            select: "email name nickname phone"
+            select: "email name nickname phone photo"
         });
         if(!post){
             const error = new Error();

@@ -88,13 +88,13 @@ class ReserveService {
         checkReserves = await Reserve.find({author: user}).sort(({create_at: -1})).skip(perPage * (page - 1))
           .limit(perPage).populate({
               path: 'author',
-              select: "email name nickname phone"
+              select: "email name nickname phone photo"
           });
       } else { // 예약자 관리
         checkReserves = await Reserve.find({host_email}).sort(({create_at: -1})).skip(perPage * (page - 1))
           .limit(perPage).populate({
               path: 'author',
-              select: "email name nickname phone"
+              select: "email name nickname phone photo"
           });
       }
 
@@ -109,7 +109,7 @@ class ReserveService {
     async getReserveDetail({nanoid}){
       const reserve = await Reserve.findOne({nanoid}).populate({
           path: 'author',
-          select: "email name nickname phone"
+          select: "email name nickname phone photo"
       });
       if(!reserve){
           const error = new Error();
@@ -126,7 +126,7 @@ class ReserveService {
       // + startSearch state 에서 각 인원수(adult, child, baby 이름으로 가져올 것) 
       //                      , 시작 끝 날짜 start_date / end_date 이름으로 가져올 것
       //                      , 총 금액(amount) 도 front 에서 계산 ! 해서 amount 이름으로 가져올 것
-      const author = await User.findOne({email: bodyData.email}, "email name nickname phone");
+      const author = await User.findOne({email: bodyData.email}, "email name nickname phone photo");
       const post = await Post.findOne({nanoid: bodyData.post_nanoid}).populate('author');
         const data = await Reserve.create({
             author: author,
