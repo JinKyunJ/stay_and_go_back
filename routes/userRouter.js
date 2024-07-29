@@ -36,9 +36,12 @@ router.get('/getuser', asyncHandler(async (req, res) => {
 
 // JWT LOGOUT : 쿠키에 있는 토큰을 비우고, 만료 기간 0 으로 설정
 // post 요청으로 url 직접 접근 차단 (완료)
-router.post('/logout', reqUserCheck, asyncHandler(async (req, res) => {
+router.post('/logout', asyncHandler(async (req, res) => {
     res.cookie('token', null, {
-        maxAge: 0
+        secure: true,
+        maxAge: 0,
+        sameSite: 'None', // 쿠키를 크로스 도메인 요청에 포함시키기 위해 'None'으로 설정
+        path: '/' // 쿠키의 경로 설정
     });
     return res.status(200).json({code: 200, message: "정상적으로 로그아웃되었습니다."});
 }));

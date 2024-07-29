@@ -10,7 +10,12 @@ const secret = process.env.COOKIE_SECRET;
 // 처음 로그인 했을 때 클라이언트에 줄 토큰에다가 signature(secret) 으로 서명 후 전달함.
 const setUserToken = (res, user) => {
     const token = jwt.sign(user, secret);
-    res.cookie('token', token);
+    res.cookie('token', token, {
+        secure: true,
+        maxAge: 360000000,
+        sameSite: 'None', // 쿠키를 크로스 도메인 요청에 포함시키기 위해 'None'으로 설정
+        path: '/' // 쿠키의 경로 설정
+    });
     return token;
 };
 
@@ -20,6 +25,7 @@ const router = Router();
 // loginCheck : 이메일 또는 패스워드 입력 확인, 이메일 형식 체크
 router.post('/', loginCheck, passport.authenticate('local', {session: false}), (req, res, next) => {
     // 로그인 성공 했을 때 클라이언트에 줄 토큰에다가 signature(secret) 으로 서명 후 전달함.
+    console.log("asdf")
     console.log(req.user);
     const token = setUserToken(res, req.user);
 
