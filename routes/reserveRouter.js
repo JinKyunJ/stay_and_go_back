@@ -55,7 +55,7 @@ router.post('/write', reqUserCheck, asyncHandler(async (req, res) => {
 router.delete('/delete', reqUserCheck, asyncHandler(async (req, res) => {
     const {nanoid} = req.body;
     const email = req.user.email;
-    const result = await postService.delPost({email, nanoid});
+    const result = await reserveService.deleteReserve({nanoid, email});
     return res.status(200).json(result);
 }));
 
