@@ -24,12 +24,13 @@ router.get('/getuser', asyncHandler(async (req, res) => {
         console.log("logout 상태 (server check)")
         return res.status(200).json({code: 411, message: "logout 상태 입니다.(server chk)"});
     }
-    const data = {email: req.user.email, name: req.user.name, is_admin: req.user.is_admin};
-    // 프론트 요청에 대해 최신 닉네임, 연락처 데이터를 넘겨주기(수정이 가능한 데이터 이므로)
+    const data = {email: req.user.email, name: req.user.name};
+    // 프론트 요청에 대해 최신 닉네임, 연락처, 프로필 포토 데이터를 넘겨주기(수정이 가능한 데이터 이므로)
     const result = await userService.findByEmail({email: data.email});
     data.nickname = result.data.nickname;
     data.phone = result.data.phone;
     data.is_admin = result.data.is_admin;
+    data.photo = result.data.photo;
     return res.status(200).json({code: 200, data: data, message: "login 상태 입니다.(server chk)"});
 }));
 
