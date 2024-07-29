@@ -56,13 +56,13 @@ router.post('/findid', asyncHandler(async (req, res) => {
 }));
 
 // 전체 유저 조회(중요 데이터 -> 관리자) (완료)
-router.get('/alluserdata', reqUserAdminCheck, asyncHandler(async (req, res) => {
+router.get('/alluserdata', asyncHandler(async (req, res) => {
     const result = await userService.findAllUser();
     return res.status(200).json(result);
 }));
 
 // findOne by email (완료)
-router.post('/email', reqUserCheck, asyncHandler(async (req, res) => {
+router.post('/email', asyncHandler(async (req, res) => {
     const {email} = req.body;
     const result = await userService.findByEmail({email});
     return res.status(200).json(result);
@@ -78,7 +78,7 @@ router.put('/', asyncHandler(async (req, res) => {
 
 // delete by email (완료)
 // 유저 삭제 시 유저 이메일 붙은 reserve Data & post Data 도 삭제해야한다.(예정 !)
-router.delete('/delete', reqUserCheck, asyncHandler(async (req,res) => {
+router.delete('/delete', asyncHandler(async (req,res) => {
     const {email} = req.body;
     if(!req.user.is_admin && email !== req.user.email){
         return res.status(403).json({code: 403, message: "타인의 정보는 삭제할 수 없습니다."});
