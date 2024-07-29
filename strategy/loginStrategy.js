@@ -38,6 +38,7 @@ const local = new LocalStrategy(config, async(email, password, done) => {
             nickname: user.nickname,
             phone: user.phone,
             is_admin: user.is_admin,
+            photo: user.photo ? user.photo : ""
         });
     } catch(err) {
         done(err, null);
