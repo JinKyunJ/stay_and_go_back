@@ -5,8 +5,8 @@ const reserveService = require('../services/reserveService');
 const reqUserCheck = require('../middlewares/reqUserCheck');
 const { User } = require('../models');
 
-// 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
-router.post('/getreserve/page', asyncHandler(async (req,res) => { 
+// 지난 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreservepast/page', asyncHandler(async (req,res) => { 
     const {mymode} = req.body;
     // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
     if(mymode && !req.user){
@@ -14,12 +14,25 @@ router.post('/getreserve/page', asyncHandler(async (req,res) => {
     }
     const user = mymode ? await User.findOne({email: req.user.email}) : "";
     const host_email = mymode ? "" : req.user.email;
-    const result = await reserveService.getReservePage({mymode, user, host_email});
+    const result = await reserveService.getReservePastPage({mymode, user, host_email});
     return res.status(200).json(result);
 }));
 
-// 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
-router.post('/getreserve/page/read', asyncHandler(async (req,res) => {
+// 다가오는 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreserveupcoming/page', asyncHandler(async (req,res) => { 
+    const {mymode} = req.body;
+    // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+    if(mymode && !req.user){
+        return res.status(400).json({code: 400, message: "로그인하지 않은 사용자입니다."});
+    }
+    const user = mymode ? await User.findOne({email: req.user.email}) : "";
+    const host_email = mymode ? "" : req.user.email;
+    const result = await reserveService.getReserveUpcomingPage({mymode, user, host_email});
+    return res.status(200).json(result);
+}));
+
+// 지난 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreservepast/page/read', asyncHandler(async (req,res) => {
     const {nowpage, mymode} = req.body;
     // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
     if(mymode && !req.user){
@@ -27,7 +40,20 @@ router.post('/getreserve/page/read', asyncHandler(async (req,res) => {
     }
     const user = mymode ? await User.findOne({email: req.user.email}) : "";
     const host_email = mymode ? "" : req.user.email;
-    const result = await reserveService.getReservePageRead({nowpage, mymode, user, host_email});
+    const result = await reserveService.getReservePastPageRead({nowpage, mymode, user, host_email});
+    return res.status(200).json(result);
+}));
+
+// 다가오는 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreserveupcoming/page/read', asyncHandler(async (req,res) => {
+    const {nowpage, mymode} = req.body;
+    // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+    if(mymode && !req.user){
+        return res.status(400).json({code: 400, message: "로그인하지 않은 사용자입니다."});
+    }
+    const user = mymode ? await User.findOne({email: req.user.email}) : "";
+    const host_email = mymode ? "" : req.user.email;
+    const result = await reserveService.getReserveUpcomingPageRead({nowpage, mymode, user, host_email});
     return res.status(200).json(result);
 }));
 

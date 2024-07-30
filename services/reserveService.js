@@ -40,69 +40,160 @@ class ReserveService {
         return {result: filteredPosts, code: 200, message: `여행(예약) 가능한 숙소 조회 완료`};
     }
 
-    // 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
-    async getReservePage({mymode, user, host_email}){
+    // 지난 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
+    async getReservePastPage({mymode, user, host_email}){
       // 첫 페이지 진입이므로 1 고정
       const page = 1;
       const perPage = 5;
+
+      const query = {
+        // db 의 end_date 가 현재 시간 보다 작거나 같다
+        $and: [
+          { // 문자열로 저장된 날짜를 Date 로 변환
+            $expr: {
+              $lte: [
+                { $dateFromString: { dateString: "$end_date" } },
+                new Date()
+              ]
+            }
+          }
+        ]
+      };
       
       // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
       let checkReserves;
       if(mymode){ // 나의 여행
-        checkReserves = await Reserve.find({author: user});
+        checkReserves = await Reserve.find({author: user, ...query});
       } else { // 예약자 관리
-        checkReserves = await Reserve.find({host_email});
+        checkReserves = await Reserve.find({host_email, ...query});
       }
 
-      // 현재 진행형인 여행과 지난 여행을 구분하여 push
-      const ingData = checkReserves.filter(v => !isPastDay(v.end_date));
-      const pastData = checkReserves.filter(v => isPastDay(v.end_date));
+      // pastResult
+      const pastResult = {
+        page: page,
+        perPage: perPage,
+        total: checkReserves.length,
+        totalPage: Math.ceil(checkReserves.length/perPage)
+      };
+
+      return {result: pastResult, code: 200, message: `reserve 페이지 정보 읽기 완료`};
+    }
+
+    // 다가오는 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
+    async getReserveUpcomingPage({mymode, user, host_email}){
+      // 첫 페이지 진입이므로 1 고정
+      const page = 1;
+      const perPage = 5;
+
+      const query = {
+        // db 의 end_date 가 현재 시간 보다 크다
+        $and: [
+          { // 문자열로 저장된 날짜를 Date 로 변환
+            $expr: {
+              $gt: [
+                { $dateFromString: { dateString: "$end_date" } },
+                new Date()
+              ]
+            }
+          }
+        ]
+      };
+      
+      // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+      let checkReserves;
+      if(mymode){ // 나의 여행
+        checkReserves = await Reserve.find({author: user, ...query});
+      } else { // 예약자 관리
+        checkReserves = await Reserve.find({host_email, ...query});
+      }
 
       // ingResult
       const ingResult = {
           page: page,
           perPage: perPage,
-          total: ingData.length,
-          totalPage: Math.ceil(ingData.length/perPage)
-      };
-      // pastResult
-      const pastResult = {
-        page: page,
-        perPage: perPage,
-        total: pastData.length,
-        totalPage: Math.ceil(pastData.length/perPage)
+          total: checkReserves.length,
+          totalPage: Math.ceil(checkReserves.length/perPage)
       };
 
-      return {result: {ingResult, pastResult}, code: 200, message: `reserve 페이지 정보 읽기 완료`};
+      return {result: ingResult, code: 200, message: `reserve 페이지 정보 읽기 완료`};
     }
 
-    // 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
-    async getReservePageRead({nowpage, mymode, user, host_email}){
+    // 지난 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
+    async getReservePastPageRead({nowpage, mymode, user, host_email}){
       const page = Number(nowpage);
       const perPage = 5;
+
+      const query = {
+        // db 의 end_date 가 현재 시간 보다 작거나 같다
+        $and: [
+          { // 문자열로 저장된 날짜를 Date 로 변환
+            $expr: {
+              $lte: [
+                { $dateFromString: { dateString: "$end_date" } },
+                new Date()
+              ]
+            }
+          }
+        ]
+      };
       
       // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
       let checkReserves;
       // 나의 여행
       if(mymode){
-        checkReserves = await Reserve.find({author: user}).sort({createdAt: -1}).skip(perPage * (page - 1))
+        checkReserves = await Reserve.find({author: user, ...query}).sort({createdAt: -1}).skip(perPage * (page - 1))
           .limit(perPage).populate({
               path: 'author',
               select: "email name nickname phone photo"
           });
       } else { // 예약자 관리
-        checkReserves = await Reserve.find({host_email}).sort({createdAt: -1}).skip(perPage * (page - 1))
+        checkReserves = await Reserve.find({host_email, ...query}).sort({createdAt: -1}).skip(perPage * (page - 1))
           .limit(perPage).populate({
               path: 'author',
               select: "email name nickname phone photo"
           });
       }
 
-      // 현재 진행형인 여행과 지난 여행을 구분하여 push
-      const ingData = checkReserves.filter(v => !isPastDay(v.end_date));
-      const pastData = checkReserves.filter(v => isPastDay(v.end_date));
+      return {result: checkReserves, code: 200, message: `여행(예약) 리스트 정보 읽기 완료`};
+    }
 
-      return {result: {ingData, pastData}, code: 200, message: `여행(예약) 리스트 정보 읽기 완료`};
+    // 다가오는 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
+    async getReserveUpcomingPageRead({nowpage, mymode, user, host_email}){
+      const page = Number(nowpage);
+      const perPage = 5;
+
+      const query = {
+        // db 의 end_date 가 현재 시간 보다 크다
+        $and: [
+          { // 문자열로 저장된 날짜를 Date 로 변환
+            $expr: {
+              $gt: [
+                { $dateFromString: { dateString: "$end_date" } },
+                new Date()
+              ]
+            }
+          }
+        ]
+      };
+      
+      // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+      let checkReserves;
+      // 나의 여행
+      if(mymode){
+        checkReserves = await Reserve.find({author: user, ...query}).sort({createdAt: -1}).skip(perPage * (page - 1))
+          .limit(perPage).populate({
+              path: 'author',
+              select: "email name nickname phone photo"
+          });
+      } else { // 예약자 관리
+        checkReserves = await Reserve.find({host_email, ...query}).sort({createdAt: -1}).skip(perPage * (page - 1))
+          .limit(perPage).populate({
+              path: 'author',
+              select: "email name nickname phone photo"
+          });
+      }
+
+      return {result: checkReserves, code: 200, message: `여행(예약) 리스트 정보 읽기 완료`};
     }
 
     // 여행(or 예약) 상세 보기 정보
