@@ -1,6 +1,5 @@
 const {User, Post, Reserve} = require('../models');
 const isDateDifferenceFrom2Days = require('../utils/isDateDifferenceFrom2Days');
-const isPastDay = require('../utils/isPastDay');
 
 class ReserveService {
     // - 메인 페이지 검색 시 사용
@@ -8,13 +7,13 @@ class ReserveService {
     // => 따라서 postsService 에서 요청하는 reserveService 임.
     async availableDateCheck({posts, startDate, endDate}){
         const query = {
-            // and 연산
-            // db 의 start_date 가 endDate 보다 작거나 같고,
-            // db 의 end_date 가 startDate 보다 크거나 같다.
+            // and 연산 으로 먼저 기간이 겹치는 reserve 데이터를 찾는다.
+            // 이후 필터로 posts 에서 v nanoid 와 reserve post_nanoid 가 겹치는 데이터는 필터링으로 지운다.
+            // reserve 의 start_date 가 search 의 endDate 보다 작거나 같고,
+            // reserve 의 end_date 가 search 의 startDate 보다 크거나 같다.
             $and: [
               { // 문자열로 저장된 날짜를 Date 로 변환
                 $expr: {
-                    // ddb 의 start_date 가 endDate 보다 작거나 같고,
                   $lte: [
                     { $dateFromString: { dateString: "$start_date" } },
                     new Date(endDate)
@@ -23,15 +22,14 @@ class ReserveService {
               },
               { // 문자열로 저장된 날짜를 Date 로 변환
                 $expr: {
-                    // db 의 end_date 가 startDate 보다 크거나 같다.
+                    // db 의 end_date 가 startDate 보다 크다.
                   $gte: [
                     { $dateFromString: { dateString: "$end_date" } },
                     new Date(startDate)
                   ]
                 }
               }
-            ]
-        };
+          ]};
         const reserves = await Reserve.find(query);
         const reserveNanoids = reserves.map(v => v.post_nanoid);
         // 예약 날짜가 잡힌 숙소는 필터링으로 제외함.
@@ -221,6 +219,7 @@ class ReserveService {
       const post = await Post.findOne({nanoid: bodyData.post_nanoid}).populate('author');
         const data = await Reserve.create({
             author: author,
+            post_nanoid: bodyData.post_nanoid,
             title: post.title,
             host_email: post.author.email,
             host_nickname: post.author.nickname,

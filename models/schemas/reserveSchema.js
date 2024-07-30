@@ -18,6 +18,11 @@ const reserveSchema = new Schema({
         required: true,
         index: true
     },
+    // (post) post_nanoid => reserve 와 post search 겹치는 날짜를 조회 후 search data 에서 필터링할 때 사용한다.
+    post_nanoid: {
+        type: String,
+        required: true
+    },
     // (post) 타이틀
     title: {
         type: String,
