@@ -3,6 +3,7 @@ const newDate = require('../utils/newDate');
 const reserveService = require('./reserveService');
 const imageToAWS = require('../utils/imageToAWS');
 const deleteImageFromAWS = require('../utils/deleteImageFromAWS');
+const parseCustomDate = require('../utils/parseToDate');
 
 class PostService {
     // 페이지 정보 read (mymode && 등록숙소 페이지에서 내가 등록한 숙소만 보기)
@@ -85,14 +86,14 @@ class PostService {
         // 먼저 검색 도시(시 권역 행정구역), 허용 인원 검색 결과 데이터를 구하고 최신 생성일 기준으로 정렬함
         let checkPosts;
         if(!mymode){
-            checkPosts = await Post.find(query).sort(({create_at: -1})).skip(perPage * (page - 1))
+            checkPosts = await Post.find(query).sort({createdAt: -1}).skip(perPage * (page - 1))
             .limit(perPage).populate({
                 path: 'author',
                 select: "email name nickname phone photo"
             });
         } else {
             const user = await User.findOne({email});
-            checkPosts = await Post.find({author: user}).sort(({create_at: -1})).skip(perPage * (page - 1))
+            checkPosts = await Post.find({author: user}).sort({createdAt: -1}).skip(perPage * (page - 1))
             .limit(perPage).populate({
                 path: 'author',
                 select: "email name nickname phone photo"
