@@ -45,9 +45,9 @@ const reserveSchema = new Schema({
         required: true
     },
     // (post) 서브 이미지
-    sub_images: {
+    sub_images: [{
         type: String
-    },
+    }],
     // (post) 주요 위치
     main_location: {
         type: String,
@@ -88,13 +88,6 @@ const reserveSchema = new Schema({
     // (search -> in ) 예약한 유아 인원 수
     baby: {
         type: Number
-    },
-    // 지난 여행인지 확인 boolean (to : 처음 생성 때는 입력 필요 없어요 !)
-    is_ing: {
-        type: Boolean,
-        required: true,
-        index: true,
-        default: false
     },
     // 예약 생성일
     create_at: {
