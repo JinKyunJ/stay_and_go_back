@@ -172,9 +172,9 @@ class PostService {
         */
         const author = await User.findOne({email: bodyData.email}, "email name nickname phone photo");
         const myPosts = await Post.find({author: author});
-        if(myPosts && myPosts.length >= 5){
+        if(myPosts && myPosts.length >= 4){
             const error = new Error();
-            Object.assign(error, {code: 400, message: "한 계정당 5개의 숙소까지만 등록할 수 있습니다."});
+            Object.assign(error, {code: 400, message: "한 계정당 4개의 숙소까지만 등록할 수 있습니다."});
             throw error;
         }
 

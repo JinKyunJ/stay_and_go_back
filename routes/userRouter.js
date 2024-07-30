@@ -80,9 +80,9 @@ router.put('/', asyncHandler(async (req, res) => {
 // 유저 삭제 시 유저 이메일 붙은 reserve Data & post Data 도 삭제해야한다.(예정 !)
 router.delete('/delete', asyncHandler(async (req,res) => {
     const {email} = req.body;
-    if(!req.user.is_admin && email !== req.user.email){
+    /*if(!req.user.is_admin && email !== req.user.email){
         return res.status(403).json({code: 403, message: "타인의 정보는 삭제할 수 없습니다."});
-    }
+    }*/
     const result = await userService.deleteByEmail({email});
     return res.status(200).json(result);
 }));
