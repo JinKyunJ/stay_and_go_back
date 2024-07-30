@@ -240,19 +240,14 @@ class ReserveService {
     }
 
     // 예약(여행) 삭제(취소 -2일 전까지만 ex. 시작일 07-05 라면 07-03 까지 가능
-    async deleteReserve({nanoid, email}){
+    async deleteReserve({nanoid}){
         const reserve = await Reserve.findOne({nanoid}).populate('author');
         if(!reserve) { 
             const error = new Error();
             Object.assign(error, {code: 400, message: "여행(예약) 정보를 가져오지 못했습니다. 다시 확인해주세요."});
             throw error;
         }
-        if(reserve.author.email !== email || reserve.host_email !== email) { 
-            const error = new Error();
-            Object.assign(error, {code: 403, message: "여행(예약) 작성자 또는 호스트가 아닙니다. 다시 확인해주세요."});
-            throw error;
-        }
-        if(!isDateDifferenceFrom2Days(reserve.start_date)) {
+        if(isDateDifferenceFrom2Days(reserve.start_date)) {
           const error = new Error();
           Object.assign(error, {code: 403, message: "여행(예약) 취소는 여행 시작일 2일 전까지만 가능합니다."});
           throw error;

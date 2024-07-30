@@ -80,8 +80,7 @@ router.post('/write', asyncHandler(async (req, res) => {
 // 여행 삭제(취소)
 router.delete('/delete', asyncHandler(async (req, res) => {
     const {nanoid} = req.body;
-    const email = req.user.email;
-    const result = await reserveService.deleteReserve({nanoid, email});
+    const result = await reserveService.deleteReserve({nanoid});
     return res.status(200).json(result);
 }));
 

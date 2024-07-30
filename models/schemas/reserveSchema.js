@@ -4,7 +4,7 @@ const {nanoid} = require('nanoid');
 const newDate = require('../../utils/newDate');
 
 const reserveSchema = new Schema({
-    // primary key
+    // primary key (삭제시 만)
     nanoid: {
         type: String,
         default: () => { return nanoid() },
