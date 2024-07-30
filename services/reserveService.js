@@ -44,7 +44,7 @@ class ReserveService {
     async getReservePage({mymode, user, host_email}){
       // 첫 페이지 진입이므로 1 고정
       const page = 1;
-      const perPage = 2;
+      const perPage = 5;
       
       // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
       let checkReserves;
@@ -79,19 +79,19 @@ class ReserveService {
     // 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
     async getReservePageRead({nowpage, mymode, user, host_email}){
       const page = Number(nowpage);
-      const perPage = 2;
+      const perPage = 5;
       
       // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
       let checkReserves;
       // 나의 여행
       if(mymode){
-        checkReserves = await Reserve.find({author: user}).sort(({create_at: -1})).skip(perPage * (page - 1))
+        checkReserves = await Reserve.find({author: user}).sort({createdAt: -1}).skip(perPage * (page - 1))
           .limit(perPage).populate({
               path: 'author',
               select: "email name nickname phone photo"
           });
       } else { // 예약자 관리
-        checkReserves = await Reserve.find({host_email}).sort(({create_at: -1})).skip(perPage * (page - 1))
+        checkReserves = await Reserve.find({host_email}).sort({createdAt: -1}).skip(perPage * (page - 1))
           .limit(perPage).populate({
               path: 'author',
               select: "email name nickname phone photo"

@@ -170,6 +170,13 @@ class PostService {
             })
         );
         */
+        const author = await User.findOne({email: bodyData.email}, "email name nickname phone photo");
+        const myPosts = await Post.find({author: author});
+        if(myPosts && myPosts.length >= 5){
+            const error = new Error();
+            Object.assign(error, {code: 400, message: "한 계정당 5개의 숙소까지만 등록할 수 있습니다."});
+            throw error;
+        }
 
         // aws 버킷에 옮기기 전 이미지 가공 + 버킷 옮기기 + url 반환 작업(util 로 옮김)
         const fixedImageUrl = await imageToAWS(imageFiles);
@@ -185,7 +192,7 @@ class PostService {
             sub_images = [];
         }
 
-        const author = await User.findOne({email: bodyData.email}, "email name nickname phone photo");
+        
         const data = await Post.create({
             author: author,
             title: bodyData.title,
