@@ -92,9 +92,9 @@ class PostService {
                 select: "email name nickname phone photo"
             });
         } else {
+            // 등록 숙소(자신의 숙소는 최대 4개까지만 등록가능하므로 굳이 페이지네이션이 필요없음
             const user = await User.findOne({email});
-            checkPosts = await Post.find({author: user}).sort({createdAt: -1}).skip(perPage * (page - 1))
-            .limit(perPage).populate({
+            checkPosts = await Post.find({author: user}).sort({createdAt: -1}).populate({
                 path: 'author',
                 select: "email name nickname phone photo"
             });
@@ -192,7 +192,6 @@ class PostService {
             sub_images = [];
         }
 
-        
         const data = await Post.create({
             author: author,
             title: bodyData.title,
@@ -221,11 +220,12 @@ class PostService {
     };
 
     // 숙소 수정 (숙소의 bodyData.nanoid 로 숙소 찾음)
-    // mode 값이 bodyData 에 추가로 담겨져야 함!!!(1: 메인 이미지, 2: 서브, 3: 둘 다 교체)
+    // mode 값이 추가로 담겨져야 함!!!(1: 메인 이미지, 2: 서브, 3: 둘 다 교체, 0. 교체 안함)
     async putPost(bodyData, imageFiles){
         // 피드백 반영
         // 이미 로그인된 사용자가 해당 서비스 함수로 진입할텐데 굳이 다시 확인 불필요함
-        const post = await Post.findOne({nanoid: bodyData.nanoid}).populate('author').populate({
+        const nanoid = bodyData.nanoid;
+        const post = await Post.findOne({nanoid}).populate('author').populate({
             path: 'author',
             select: "email name nickname phone photo"
         });
@@ -244,18 +244,17 @@ class PostService {
         if(imageFiles.length > 0){
             // 1. 기존 post 이미지 url 을 s3 버킷에서 삭제
             // main_image 수정: 1, sub_images 수정: 2, 둘 다 수정: 3
-            const mode = bodyData.mode;
             let deleteFiles = [];
-            if(mode === "1"){
+            if(bodyData.mode === "1"){
                 if(imageFiles.length > 1){
                     const error = new Error();
                     Object.assign(error, {code: 400, message: "메인 이미지는 2장 이상이 될 수 없습니다."});
                     throw error;
                 }
                 deleteFiles.push(post.main_image);
-            } else if (mode === "2"){             
+            } else if (bodyData.mode === "2"){             
                 deleteFiles = post.sub_images;
-            } else {
+            } else if(bodyData.mode === "3"){
                 // sub_images 배열의 모든 값과 메인 이미지 를 push 한다.
                 deleteFiles.push(...post.sub_images, post.main_image);
             }
@@ -266,11 +265,11 @@ class PostService {
             const fixedImageUrl = await imageToAWS(imageFiles);
             // s3 이미지 url
             // main_image 수정: 1, sub_images 수정: 2, 둘 다 수정: 3
-            if(mode === "1"){
+            if(bodyData.mode === "1"){
                 bodyData.main_image = fixedImageUrl[0];
-            } else if(mode === "2"){
+            } else if(bodyData.mode === "2"){
                 bodyData.sub_images = fixedImageUrl;
-            } else {
+            } else if(bodyData.mode === "3"){
                 bodyData.main_image = fixedImageUrl[0];
                 bodyData.sub_images = fixedImageUrl.slice(1);
             }
@@ -278,10 +277,10 @@ class PostService {
 
         const update_at = newDate();
         bodyData.update_at = update_at;
-        const nanoid = bodyData.nanoid;
+
         Reflect.deleteProperty(bodyData, "email");
-        Reflect.deleteProperty(bodyData, "nanoid");
         Reflect.deleteProperty(bodyData, "author");
+        Reflect.deleteProperty(bodyData, "nanoid");
         // main_image 수정: 1, sub_images 수정: 2, 둘 다 수정: 3
         Reflect.deleteProperty(bodyData, "mode");
 

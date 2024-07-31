@@ -50,6 +50,7 @@ router.post('/write', upload.array('images'), asyncHandler(async (req, res) => {
 }));
 
 // 숙소 수정 (완료) (formData header 셋팅 체크(front)) (버킷 이미지 삭제 -> 새 이미지 등록 -> url 반환(util 폴더 참고))
+// mode 값이 추가로 담겨져야 함!!!(1: 메인 이미지, 2: 서브, 3: 둘 다 교체, 0. 교체 안함)
 router.put('/put', upload.array('images'), asyncHandler(async (req, res) => {
     // 숙소 정보에 추가로 로그인된 사용자 email 이 있어야 함 *front 에서도 체크해야 함
     const bodyData = req.body;
