@@ -65,6 +65,8 @@ router.put('/put', upload.array('images'), asyncHandler(async (req, res) => {
 // => (지난 여행으로 남아야 하고, 애초에 reserve 에 추가될 때에는 
 //     외래 키가 들어가지 않고 실제 값들이 들어갈 것임 !!)
 // => 버킷에서 실제 이미지도 지우지 않는다. (마찬가지로 지난 여행에서 확인해야함.)
+// => 숙소 삭제 시 reserve 삭제 케이스 있음:
+//    지우는 숙소가 다가오는 여행 중 아직 시작 안한 reserve 가 있을 경우에는 해당 reserve 도 제거
 router.delete('/delete', asyncHandler(async (req, res) => {
     const {nanoid} = req.body;
     const email = req.user.email;

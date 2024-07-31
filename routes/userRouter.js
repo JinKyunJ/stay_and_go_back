@@ -77,7 +77,7 @@ router.put('/', asyncHandler(async (req, res) => {
 }));
 
 // delete by email (완료)
-// 유저 삭제 시 유저 이메일 붙은 reserve Data & post Data 도 삭제해야한다.(예정 !)
+// 유저 삭제 시 유저 이메일 붙은 reserve Data & post Data 도 삭제해야한다.
 router.delete('/delete', asyncHandler(async (req,res) => {
     const {email} = req.body;
     /*if(!req.user.is_admin && email !== req.user.email){

@@ -1,4 +1,4 @@
-const {User, Post} = require('../models');
+const {User, Post, Reserve} = require('../models');
 const newDate = require('../utils/newDate');
 const reserveService = require('./reserveService');
 const imageToAWS = require('../utils/imageToAWS');
@@ -11,7 +11,7 @@ class PostService {
         // 첫 페이지 진입이므로 1 고정
         const page = 1;
         const perPage = 5;
-        
+
         const query = {
             $and: [
                 // 메인 도시 검색 (search.city가 "전체" 일 경우는 도시 검색 필터를 생략함)
@@ -303,7 +303,32 @@ class PostService {
             Object.assign(error, {code: 403, message: "숙소 작성자가 아닙니다. 다시 확인해주세요."});
             throw error;
         }
-        // AWS 버킷 사진 제거 작업 취소 ! : "지난 여행" 으로 url 은 남아야 함
+
+        // 지우는 숙소가 다가오는 여행 중 아직 시작 안한 reserve 가 있을 경우에는 해당 reserve 도 제거
+        // 사진 제거 작업 필요
+        const query = {
+            // db 의 start_date 가 현재 시간 보다 크다
+            $and: [
+              { // 문자열로 저장된 날짜를 Date 로 변환
+                $expr: {
+                  $gt: [
+                    { $dateFromString: { dateString: "$start_date" } },
+                    new Date()
+                  ]
+                }
+              },
+              {
+                post_nanoid: nanoid
+              }
+            ]
+        };
+        const delReserve = await Reserve.find(query);
+        if(delReserve && delReserve.length > 0){
+            let deleteFiles = [];
+            deleteFiles.push(...post.sub_images, post.main_image);
+            await deleteImageFromAWS(deleteFiles);
+            await Reserve.deleteMany(query);
+        }
 
         await Post.deleteOne({nanoid});
         return {code: 200, message: `숙소 삭제 완료`};
