@@ -6,8 +6,8 @@ const isDateDifferenceFrom2Days = (startDateStr) => {
     // 일(day)로 변환
     const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
 
-    // 날 차이가 2일 보다 작거나 같고 0일보다 크거나 같은지 비교 true or false
-    return daysDiff <= 2 && daysDiff >= 0;
+    // 날 차이가 2일 보다 작은지 비교 true or false
+    return daysDiff <= 2;
 };
 
 module.exports = isDateDifferenceFrom2Days;
