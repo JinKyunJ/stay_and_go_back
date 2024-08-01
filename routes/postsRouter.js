@@ -69,7 +69,6 @@ router.put('/put', upload.array('images'), asyncHandler(async (req, res) => {
 //    지우는 숙소가 다가오는 여행 중 아직 시작 안한 reserve 가 있을 경우에는 해당 reserve 도 제거
 router.delete('/delete', asyncHandler(async (req, res) => {
     const {nanoid} = req.body;
-    const email = req.user.email;
     const result = await postService.delPost({email, nanoid});
     return res.status(200).json(result);
 }));

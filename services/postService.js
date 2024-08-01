@@ -289,18 +289,13 @@ class PostService {
     }
 
     // 숙소 삭제 (숙소의 bodyData.nanoid 로 숙소 찾음)
-    async delPost({email, nanoid}){
+    async delPost({nanoid}){
         // 피드백 반영
         // 이미 로그인된 사용자가 해당 서비스 함수로 진입할텐데 굳이 다시 확인 불필요함
         const post = await Post.findOne({nanoid}).populate('author');
         if(!post) { 
             const error = new Error();
             Object.assign(error, {code: 400, message: "숙소 정보를 가져오지 못했습니다. 다시 확인해주세요."});
-            throw error;
-        }
-        if(post.author.email !== email) { 
-            const error = new Error();
-            Object.assign(error, {code: 403, message: "숙소 작성자가 아닙니다. 다시 확인해주세요."});
             throw error;
         }
 
