@@ -179,9 +179,21 @@ class PostService {
         }
 
         // aws 버킷에 옮기기 전 이미지 가공 + 버킷 옮기기 + url 반환 작업(util 로 옮김)
-        const fixedImageUrl = await imageToAWS(imageFiles);
-        bodyData.imageUrl = fixedImageUrl;
+        const fixedImageUrl = [];
+        const main_image_arr = [imageFiles[0]];
+        // `imageToAWS`가 배열을 반환하므로 배열을 전개해 추가한다.
+        const mainImageUrl = await imageToAWS(main_image_arr);
+        fixedImageUrl.push(...mainImageUrl); 
 
+        let sub_images_arr = [];
+        if (imageFiles.length > 1) {
+            sub_images_arr = imageFiles.slice(1);
+            const subImageUrls = await imageToAWS(sub_images_arr);
+            fixedImageUrl.push(...subImageUrls); 
+        }
+        
+        bodyData.imageUrl = fixedImageUrl;
+        console.log(bodyData.imageUrl);
         // s3 이미지 url
         // main_image <-> sub_images 분리시킴
         const main_image = bodyData.imageUrl[0];
