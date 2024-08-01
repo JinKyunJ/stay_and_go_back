@@ -42,7 +42,7 @@ class ReserveService {
     async getReservePastPage({mymode, user, host_email}){
       // 첫 페이지 진입이므로 1 고정
       const page = 1;
-      const perPage = 5;
+      const perPage = 6;
 
       const query = {
         // db 의 end_date 가 현재 시간 보다 작거나 같다
@@ -81,7 +81,7 @@ class ReserveService {
     async getReserveUpcomingPage({mymode, user, host_email}){
       // 첫 페이지 진입이므로 1 고정
       const page = 1;
-      const perPage = 5;
+      const perPage = 6;
 
       const query = {
         // db 의 end_date 가 현재 시간 보다 크다
@@ -119,7 +119,7 @@ class ReserveService {
     // 지난 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
     async getReservePastPageRead({nowpage, mymode, user, host_email}){
       const page = Number(nowpage);
-      const perPage = 5;
+      const perPage = 6;
 
       const query = {
         // db 의 end_date 가 현재 시간 보다 작거나 같다
@@ -158,7 +158,7 @@ class ReserveService {
     // 다가오는 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
     async getReserveUpcomingPageRead({nowpage, mymode, user, host_email}){
       const page = Number(nowpage);
-      const perPage = 5;
+      const perPage = 6;
 
       const query = {
         // db 의 end_date 가 현재 시간 보다 크다
