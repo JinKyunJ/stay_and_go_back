@@ -324,9 +324,7 @@ class PostService {
         };
         const delReserve = await Reserve.find(query);
         if(delReserve && delReserve.length > 0){
-            let deleteFiles = [];
-            deleteFiles.push(...post.sub_images, post.main_image);
-            await deleteImageFromAWS(deleteFiles);
+            // 사진 삭제 로직 제거(지난 여행에서 확인 필요함)
             await Reserve.deleteMany(query);
         }
 
