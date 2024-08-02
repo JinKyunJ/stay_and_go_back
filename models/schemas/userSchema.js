@@ -28,6 +28,10 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
+    // 유저 프로필사진 => 회원 정보 수정에서 등록 가능 ! (사실상 이모지)
+    photo: {
+        type: String
+    },
     // 유저 연락처
     phone: {
         type: String,

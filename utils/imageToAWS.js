@@ -17,7 +17,8 @@ const imageToAWS = async (imageFiles) => {
     // 단 return 할 때만 주의(s3 에 맞는 프로퍼티 체크)
     const imageProcessing = async (imageBuffer) => {
         return sharp(imageBuffer).resize({width: 800, withoutEnlargement: true})
-            .withMetadata(false)
+            .withMetadata(true)
+            .rotate()  // EXIF 데이터에 기반하여 자동으로 이미지 회전 조정
             .webp({quality: 70})
             .toBuffer(); // 처리 후 버퍼 반환
     };

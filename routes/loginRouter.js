@@ -10,7 +10,13 @@ const secret = process.env.COOKIE_SECRET;
 // 처음 로그인 했을 때 클라이언트에 줄 토큰에다가 signature(secret) 으로 서명 후 전달함.
 const setUserToken = (res, user) => {
     const token = jwt.sign(user, secret);
-    res.cookie('token', token);
+    res.cookie('token', token, {
+        secure: true,
+        maxAge: 360000000,
+        sameSite: 'None', // 쿠키를 크로스 도메인 요청에 포함시키기 위해 'None'으로 설정
+        path: '/' // 쿠키의 경로 설정
+    });
+    return token;
 };
 
 const router = Router();
@@ -19,15 +25,14 @@ const router = Router();
 // loginCheck : 이메일 또는 패스워드 입력 확인, 이메일 형식 체크
 router.post('/', loginCheck, passport.authenticate('local', {session: false}), (req, res, next) => {
     // 로그인 성공 했을 때 클라이언트에 줄 토큰에다가 signature(secret) 으로 서명 후 전달함.
-    console.log(req.user);
-    setUserToken(res, req.user);
+    const token = setUserToken(res, req.user);
 
     // 관리자 계정 로그인 시 알림 팝업 확인
     if(req.user && req.user.is_admin){
         return res.status(200).json({code: 202, message: "관리자 로그인에 성공하였습니다."});
     }
     // 일반 로그인 성공 알림
-    return res.status(200).json({code: 200, message: "로그인에 성공하였습니다."});
+    return res.status(200).json({token: token, code: 200, message: "로그인에 성공하였습니다."});
 });
 
 module.exports = router;

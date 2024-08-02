@@ -13,6 +13,7 @@ const jwtMiddleware = require('./middlewares/jwtMiddleware');
 const userRouter = require('./routes/userRouter');
 const loginRouter = require('./routes/loginRouter');
 const postRouter = require('./routes/postsRouter');
+const reserveRouter = require('./routes/reserveRouter');
 // multer 설정 가져오기
 const upload = require('./utils/multerConfig');
 
@@ -22,7 +23,12 @@ const app = express();
 dotenv.config();
 
 // 모든 도메인에서 cors 허용 (개발 및 테스트)
-app.use(cors());
+const corsOptions = {
+    origin: "http://localhost:3000", // 배포 될 때에는 origin 에 배열로 vm 서버 ip port 넣기
+    // origin: ["http://localhost:3000", ‘http://another-origin.com']
+    credentials: true,
+};
+app.use(cors(corsOptions));
 
 // body parser
 app.use(express.json());
@@ -52,6 +58,7 @@ mongoose.connection.on('err', (err) => {
 app.use('/users', userRouter);
 app.use('/login', loginRouter);
 app.use('/post', postRouter);
+app.use('/reserve', reserveRouter);
 
 // app.get (front routing)
 app.get('*', (req, res) => {

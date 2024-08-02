@@ -1,16 +1,17 @@
-const {User, Post} = require('../models');
+const {User, Post, Reserve} = require('../models');
 const newDate = require('../utils/newDate');
 const reserveService = require('./reserveService');
 const imageToAWS = require('../utils/imageToAWS');
 const deleteImageFromAWS = require('../utils/deleteImageFromAWS');
+const parseCustomDate = require('../utils/parseToDate');
 
 class PostService {
     // 페이지 정보 read (mymode && 등록숙소 페이지에서 내가 등록한 숙소만 보기)
     async getPostsPage({search, category, mymode, email}){
         // 첫 페이지 진입이므로 1 고정
         const page = 1;
-        const perPage = 2;
-        
+        const perPage = 6;
+
         const query = {
             $and: [
                 // 메인 도시 검색 (search.city가 "전체" 일 경우는 도시 검색 필터를 생략함)
@@ -64,7 +65,7 @@ class PostService {
     // 숙소 리스트 read
     async getPosts({nowpage, search, category, mymode, email}){
         const page = Number(nowpage);
-        const perPage = 2;
+        const perPage = 6;
 
         const query = {
             $and: [
@@ -85,17 +86,17 @@ class PostService {
         // 먼저 검색 도시(시 권역 행정구역), 허용 인원 검색 결과 데이터를 구하고 최신 생성일 기준으로 정렬함
         let checkPosts;
         if(!mymode){
-            checkPosts = await Post.find(query).sort(({create_at: -1})).skip(perPage * (page - 1))
+            checkPosts = await Post.find(query).sort({createdAt: -1}).skip(perPage * (page - 1))
             .limit(perPage).populate({
                 path: 'author',
-                select: "email name nickname phone"
+                select: "email name nickname phone photo"
             });
         } else {
+            // 등록 숙소(자신의 숙소는 최대 4개까지만 등록가능하므로 굳이 페이지네이션이 필요없음
             const user = await User.findOne({email});
-            checkPosts = await Post.find({author: user}).sort(({create_at: -1})).skip(perPage * (page - 1))
-            .limit(perPage).populate({
+            checkPosts = await Post.find({author: user}).sort({createdAt: -1}).populate({
                 path: 'author',
-                select: "email name nickname phone"
+                select: "email name nickname phone photo"
             });
         }
          
@@ -169,11 +170,30 @@ class PostService {
             })
         );
         */
+        const author = await User.findOne({email: bodyData.email}, "email name nickname phone photo");
+        const myPosts = await Post.find({author: author});
+        if(myPosts && myPosts.length >= 4){
+            const error = new Error();
+            Object.assign(error, {code: 400, message: "한 계정당 4개의 숙소까지만 등록할 수 있습니다."});
+            throw error;
+        }
 
         // aws 버킷에 옮기기 전 이미지 가공 + 버킷 옮기기 + url 반환 작업(util 로 옮김)
-        const fixedImageUrl = await imageToAWS(imageFiles);
-        bodyData.imageUrl = fixedImageUrl;
+        const fixedImageUrl = [];
+        const main_image_arr = [imageFiles[0]];
+        // `imageToAWS`가 배열을 반환하므로 배열을 전개해 추가한다.
+        const mainImageUrl = await imageToAWS(main_image_arr);
+        fixedImageUrl.push(...mainImageUrl); 
 
+        let sub_images_arr = [];
+        if (imageFiles.length > 1) {
+            sub_images_arr = imageFiles.slice(1);
+            const subImageUrls = await imageToAWS(sub_images_arr);
+            fixedImageUrl.push(...subImageUrls); 
+        }
+        
+        bodyData.imageUrl = fixedImageUrl;
+        console.log(bodyData.imageUrl);
         // s3 이미지 url
         // main_image <-> sub_images 분리시킴
         const main_image = bodyData.imageUrl[0];
@@ -184,7 +204,6 @@ class PostService {
             sub_images = [];
         }
 
-        const author = await User.findOne({email: bodyData.email}, "email name nickname phone");
         const data = await Post.create({
             author: author,
             title: bodyData.title,
@@ -213,13 +232,14 @@ class PostService {
     };
 
     // 숙소 수정 (숙소의 bodyData.nanoid 로 숙소 찾음)
-    // mode 값이 bodyData 에 추가로 담겨져야 함!!!(1: 메인 이미지, 2: 서브, 3: 둘 다 교체)
+    // mode 값이 추가로 담겨져야 함!!!(1: 메인 이미지, 2: 서브, 3: 둘 다 교체, 0. 교체 안함)
     async putPost(bodyData, imageFiles){
         // 피드백 반영
         // 이미 로그인된 사용자가 해당 서비스 함수로 진입할텐데 굳이 다시 확인 불필요함
-        const post = await Post.findOne({nanoid: bodyData.nanoid}).populate('author').populate({
+        const nanoid = bodyData.nanoid;
+        const post = await Post.findOne({nanoid}).populate('author').populate({
             path: 'author',
-            select: "email name nickname phone"
+            select: "email name nickname phone photo"
         });
         if(!post) { 
             const error = new Error();
@@ -236,18 +256,17 @@ class PostService {
         if(imageFiles.length > 0){
             // 1. 기존 post 이미지 url 을 s3 버킷에서 삭제
             // main_image 수정: 1, sub_images 수정: 2, 둘 다 수정: 3
-            const mode = bodyData.mode;
             let deleteFiles = [];
-            if(mode === "1"){
+            if(bodyData.mode === "1"){
                 if(imageFiles.length > 1){
                     const error = new Error();
                     Object.assign(error, {code: 400, message: "메인 이미지는 2장 이상이 될 수 없습니다."});
                     throw error;
                 }
                 deleteFiles.push(post.main_image);
-            } else if (mode === "2"){             
+            } else if (bodyData.mode === "2"){             
                 deleteFiles = post.sub_images;
-            } else {
+            } else if(bodyData.mode === "3"){
                 // sub_images 배열의 모든 값과 메인 이미지 를 push 한다.
                 deleteFiles.push(...post.sub_images, post.main_image);
             }
@@ -255,14 +274,26 @@ class PostService {
             // 2. 새로운 이미지를 sharp 처리
             // 3. 새로운 이미지를 버킷에 넣고 url 반환
             // 4. url 을 가공해서 bodyData.main_image, bodyData.sub_images 에 삽입
-            const fixedImageUrl = await imageToAWS(imageFiles);
+            // aws 버킷에 옮기기 전 이미지 가공 + 버킷 옮기기 + url 반환 작업(util 로 옮김)
+            const fixedImageUrl = [];
+            const main_image_arr = [imageFiles[0]];
+            // `imageToAWS`가 배열을 반환하므로 배열을 전개해 추가한다.
+            const mainImageUrl = await imageToAWS(main_image_arr);
+            fixedImageUrl.push(...mainImageUrl); 
+
+            let sub_images_arr = [];
+            if (imageFiles.length > 1) {
+                sub_images_arr = imageFiles.slice(1);
+                const subImageUrls = await imageToAWS(sub_images_arr);
+                fixedImageUrl.push(...subImageUrls); 
+            }
             // s3 이미지 url
             // main_image 수정: 1, sub_images 수정: 2, 둘 다 수정: 3
-            if(mode === "1"){
+            if(bodyData.mode === "1"){
                 bodyData.main_image = fixedImageUrl[0];
-            } else if(mode === "2"){
+            } else if(bodyData.mode === "2"){
                 bodyData.sub_images = fixedImageUrl;
-            } else {
+            } else if(bodyData.mode === "3"){
                 bodyData.main_image = fixedImageUrl[0];
                 bodyData.sub_images = fixedImageUrl.slice(1);
             }
@@ -270,10 +301,10 @@ class PostService {
 
         const update_at = newDate();
         bodyData.update_at = update_at;
-        const nanoid = bodyData.nanoid;
+
         Reflect.deleteProperty(bodyData, "email");
-        Reflect.deleteProperty(bodyData, "nanoid");
         Reflect.deleteProperty(bodyData, "author");
+        Reflect.deleteProperty(bodyData, "nanoid");
         // main_image 수정: 1, sub_images 수정: 2, 둘 다 수정: 3
         Reflect.deleteProperty(bodyData, "mode");
 
@@ -282,7 +313,7 @@ class PostService {
     }
 
     // 숙소 삭제 (숙소의 bodyData.nanoid 로 숙소 찾음)
-    async delPost({email, nanoid}){
+    async delPost({nanoid}){
         // 피드백 반영
         // 이미 로그인된 사용자가 해당 서비스 함수로 진입할텐데 굳이 다시 확인 불필요함
         const post = await Post.findOne({nanoid}).populate('author');
@@ -291,12 +322,30 @@ class PostService {
             Object.assign(error, {code: 400, message: "숙소 정보를 가져오지 못했습니다. 다시 확인해주세요."});
             throw error;
         }
-        if(post.author.email !== email) { 
-            const error = new Error();
-            Object.assign(error, {code: 403, message: "숙소 작성자가 아닙니다. 다시 확인해주세요."});
-            throw error;
+
+        // 지우는 숙소가 다가오는 여행 중 아직 시작 안한 reserve 가 있을 경우에는 해당 reserve 도 제거
+        // 사진 제거 작업 필요
+        const query = {
+            // db 의 start_date 가 현재 시간 보다 크다
+            $and: [
+              { // 문자열로 저장된 날짜를 Date 로 변환
+                $expr: {
+                  $gt: [
+                    { $dateFromString: { dateString: "$start_date" } },
+                    new Date()
+                  ]
+                }
+              },
+              {
+                post_nanoid: nanoid
+              }
+            ]
+        };
+        const delReserve = await Reserve.find(query);
+        if(delReserve && delReserve.length > 0){
+            // 사진 삭제 로직 제거(지난 여행에서 확인 필요함)
+            await Reserve.deleteMany(query);
         }
-        // AWS 버킷 사진 제거 작업 취소 ! : "지난 여행" 으로 url 은 남아야 함
 
         await Post.deleteOne({nanoid});
         return {code: 200, message: `숙소 삭제 완료`};
@@ -308,7 +357,7 @@ class PostService {
         // 이미 로그인된 사용자가 해당 서비스 함수로 진입할텐데 굳이 다시 확인 불필요함
         const post = await Post.findOne({nanoid}).populate({
             path: 'author',
-            select: "email name nickname phone"
+            select: "email name nickname phone photo"
         });
         if(!post){
             const error = new Error();

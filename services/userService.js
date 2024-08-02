@@ -67,6 +67,7 @@ class UserService {
             Object.assign(error, {data: [], code: 404, message: "이름과 전화번호로 조회된 회원이 없습니다."})
             throw error;
         }
+        console.log(user);
         return {data: user.email, code: 200, message: "유저 ID가 성공적으로 조회되었습니다. ID를 확인해주세요!"};
     };
 
@@ -168,6 +169,7 @@ class UserService {
                 throw error;
             }
         }
+
         
         // 인증 코드 비교 진행( 정상 인증 코드로 판단 시 is_verified 를 true 로 변경하여 회원가입 절차가 가능하도록 함)
         if(secret === verify.secret){
@@ -202,13 +204,14 @@ class UserService {
     // 전체 유저 조회(관리자)
     async findAllUser(){
         // 원하는 속성들만 찾기
-        const users = await User.find({}, 'email name nickname phone nanoid create_at update_at');
+        // 실제 서비스에서는 유저가 매우 많을 때(1000명 이상 등) 을 고려하여 페이지네이션이 있으면 좋음 (피드백 사항)
+        const users = await User.find({}, 'email name nickname phone photo nanoid is_admin create_at update_at');
         return users;
     }
 
     // findOne by email
     async findByEmail({email}) {
-        const user = await User.findOne({email}, 'email name nickname phone nanoid create_at update_at');
+        const user = await User.findOne({email}, 'email name nickname phone photo nanoid is_admin create_at update_at');
         if(!user){
             const error = new Error();
             Object.assign(error, {data: [], code: 404, message: "이메일로 조회된 회원이 없습니다."})
@@ -219,11 +222,22 @@ class UserService {
 
     // update by email (nickname, password, phone 수정 가능)
     async updateByEmail({email}, bodyData){
+        // 수정일 경우 닉네임, 전화번호 중복 검사가 이뤄지는데 
+        // 부분 수정이 가능해야 하므로 => 기존 user 와 동일한 사용자와 중복일 경우는 pass 처리해야함
+        // 기존 유저 정보
+        const user = await User.findOne({email});
+        if(!user){
+            const error = new Error();
+            Object.assign(error, {code: 404, message: "이메일로 조회된 회원이 없습니다."})
+            throw error;
+        }
+
         // 닉네임 중복 체크 후 업데이트
         if(bodyData.nickname){
             const {nickname} = bodyData;
             const nameUser = await User.findOne({nickname: nickname});
-            if(nameUser){
+            // 수정한 닉네임을 이미 사용하는 다른 사용자가 있을 경우 중복처리
+            if(nameUser && (nameUser.email !== user.email)){
                 const error = new Error();
                 Object.assign(error, {code: 400, message: "중복된 닉네임입니다. 닉네임을 변경해주세요."});
                 throw error;
@@ -233,37 +247,35 @@ class UserService {
         if(bodyData.phone){
             const {phone} = bodyData;
             const phoneUser = await User.findOne({phone});
-            if(phoneUser){
+            // 수정한 전화번호를 이미 사용하는 다른 사용자가 있을 경우 중복처리
+            if(phoneUser && (phoneUser.email !== user.email)){
                 const error = new Error();
                 Object.assign(error, {code: 400, message: "중복된 전화번호입니다. 전화번호를 변경해주세요."});
                 throw error;
             };
         }
         
-        const user = await User.findOne({email});
-        if(!user){
-            const error = new Error();
-            Object.assign(error, {code: 404, message: "이메일로 조회된 회원이 없습니다."})
-            throw error;
-        } else {
+        // 비밀 번호 수정사항이 있을 경우, sha256 단방향 해시 비밀번호 사용
+        // 10자리 패스워드 프론트와 맞춤(특수문자 포함은 front 에서 체크 후 넘어옴)
+        // crypto 의 경우 비밀번호 보다는 덜 중요한 정보에 많이 쓰이고, Bcrypt 가 더 비밀번호로는 많이 쓰임(피드백 추천 사항)
+        if(bodyData.password && bodyData.password.length >= 10){
             // sha256 단방향 해시 비밀번호 사용
-            if(bodyData.password){
-                // sha256 단방향 해시 비밀번호 사용
-                const hash = crypto.createHash('sha256').update(bodyData.password).digest('hex');
-                bodyData.password = hash
-            }
-            // update 날짜 부여
-            bodyData.update_at = newDate();
-
-            // 수정할 수 없는 정보들은 프로퍼티 제거
-            Reflect.deleteProperty(bodyData, "email");
-            Reflect.deleteProperty(bodyData, "nanoid");
-            Reflect.deleteProperty(bodyData, "is_admin");
-            Reflect.deleteProperty(bodyData, "name");
-
-            await User.updateOne(user, bodyData);
-            return {code: 200, message: `${email} 사용자 수정 동작 완료`};
+            const hash = crypto.createHash('sha256').update(bodyData.password).digest('hex');
+            bodyData.password = hash
+        } else {
+            Reflect.deleteProperty(bodyData, "password");
         }
+        // update 날짜 부여
+        bodyData.update_at = newDate();
+
+        // 수정할 수 없는 정보들은 프로퍼티 제거
+        Reflect.deleteProperty(bodyData, "email");
+        Reflect.deleteProperty(bodyData, "nanoid");
+        Reflect.deleteProperty(bodyData, "is_admin");
+        Reflect.deleteProperty(bodyData, "name");
+
+        await User.updateOne(user, bodyData);
+        return {code: 200, message: `${email} 사용자 수정 동작 완료`};
     }
 
     // delete by email

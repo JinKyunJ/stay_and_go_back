@@ -1,0 +1,77 @@
+[
+  {
+    "id": "1",
+    "title": "부산 단기숙소",
+    "name": "혜림",
+    "startDate": "2024-02-03",
+    "endDate": "2024-02-05",
+    "adult": 1,
+    "child": 1,
+    "baby": 0,
+    "price": 120000,
+    "totalPrice": 240000,
+    "main_image": "https://picsum.photos/111/111?random=1",
+    "sub_images": [
+      "https://picsum.photos/111/111?random=2",
+      "https://picsum.photos/111/111?random=3"
+    ]
+  },
+  {
+    "id": "2",
+    "title": "제주도 호텔",
+    "name": "지현",
+    "startDate": "2024-03-10",
+    "endDate": "2024-03-15",
+    "adult": 4,
+    "child": 2,
+    "baby": 1,
+    "price": 200000,
+    "totalPrice": 1200000,
+    "main_image": "https://picsum.photos/111/111?random=4",
+    "sub_images": []
+  },
+  {
+    "id": "3",
+    "title": "강릉 펜션",
+    "name": "민수",
+    "startDate": "2024-04-01",
+    "endDate": "2024-04-07",
+    "adult": 1,
+    "child": 0,
+    "baby": 0,
+    "price": 150000,
+    "totalPrice": 900000,
+    "main_image": "https://picsum.photos/111/111?random=6",
+    "sub_images": [
+      "https://picsum.photos/111/111?random=5"
+    ]
+  },
+  {
+    "id": "4",
+    "title": "서울 게스트하우스",
+    "name": "소영",
+    "startDate": "2024-05-05",
+    "endDate": "2024-05-10",
+    "adult": 3,
+    "child": 0,
+    "baby": 3,
+    "price": 180000,
+    "totalPrice": 900000,
+    "main_image": "https://picsum.photos/111/111?random=7",
+    "sub_images": []
+  },
+  {
+    "id": "5",
+    "title": "인천 집",
+    "name": "규진",
+    "startDate": "2024-07-22",
+    "endDate": "2024-07-29",
+    "adult": 2,
+    "child": 0,
+    "baby": 0,
+    "price": 230000,
+    "totalPrice": 460000,
+    "main_image": "https://picsum.photos/111/111?random=8",
+    "sub_images": []
+  }
+]
