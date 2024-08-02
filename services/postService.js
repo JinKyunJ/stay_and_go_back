@@ -274,7 +274,19 @@ class PostService {
             // 2. 새로운 이미지를 sharp 처리
             // 3. 새로운 이미지를 버킷에 넣고 url 반환
             // 4. url 을 가공해서 bodyData.main_image, bodyData.sub_images 에 삽입
-            const fixedImageUrl = await imageToAWS(imageFiles);
+            // aws 버킷에 옮기기 전 이미지 가공 + 버킷 옮기기 + url 반환 작업(util 로 옮김)
+            const fixedImageUrl = [];
+            const main_image_arr = [imageFiles[0]];
+            // `imageToAWS`가 배열을 반환하므로 배열을 전개해 추가한다.
+            const mainImageUrl = await imageToAWS(main_image_arr);
+            fixedImageUrl.push(...mainImageUrl); 
+
+            let sub_images_arr = [];
+            if (imageFiles.length > 1) {
+                sub_images_arr = imageFiles.slice(1);
+                const subImageUrls = await imageToAWS(sub_images_arr);
+                fixedImageUrl.push(...subImageUrls); 
+            }
             // s3 이미지 url
             // main_image 수정: 1, sub_images 수정: 2, 둘 다 수정: 3
             if(bodyData.mode === "1"){

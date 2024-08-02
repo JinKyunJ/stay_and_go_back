@@ -204,6 +204,7 @@ class UserService {
     // 전체 유저 조회(관리자)
     async findAllUser(){
         // 원하는 속성들만 찾기
+        // 실제 서비스에서는 유저가 매우 많을 때(1000명 이상 등) 을 고려하여 페이지네이션이 있으면 좋음 (피드백 사항)
         const users = await User.find({}, 'email name nickname phone photo nanoid is_admin create_at update_at');
         return users;
     }
@@ -256,6 +257,7 @@ class UserService {
         
         // 비밀 번호 수정사항이 있을 경우, sha256 단방향 해시 비밀번호 사용
         // 10자리 패스워드 프론트와 맞춤(특수문자 포함은 front 에서 체크 후 넘어옴)
+        // crypto 의 경우 비밀번호 보다는 덜 중요한 정보에 많이 쓰이고, Bcrypt 가 더 비밀번호로는 많이 쓰임(피드백 추천 사항)
         if(bodyData.password && bodyData.password.length >= 10){
             // sha256 단방향 해시 비밀번호 사용
             const hash = crypto.createHash('sha256').update(bodyData.password).digest('hex');
