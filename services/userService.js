@@ -204,7 +204,7 @@ class UserService {
     // 전체 유저 조회(관리자)
     async findAllUser(){
         // 원하는 속성들만 찾기
-        const users = await User.find({}, 'email name nickname phone photo nanoid create_at update_at');
+        const users = await User.find({}, 'email name nickname phone photo nanoid is_admin create_at update_at');
         return users;
     }
 
