@@ -236,7 +236,7 @@ class UserService {
             const {nickname} = bodyData;
             const nameUser = await User.findOne({nickname: nickname});
             // 수정한 닉네임을 이미 사용하는 다른 사용자가 있을 경우 중복처리
-            if(nameUser !== user){
+            if(nameUser && (nameUser.email !== user.email)){
                 const error = new Error();
                 Object.assign(error, {code: 400, message: "중복된 닉네임입니다. 닉네임을 변경해주세요."});
                 throw error;
@@ -247,7 +247,7 @@ class UserService {
             const {phone} = bodyData;
             const phoneUser = await User.findOne({phone});
             // 수정한 전화번호를 이미 사용하는 다른 사용자가 있을 경우 중복처리
-            if(phoneUser !== user){
+            if(phoneUser && (phoneUser.email !== user.email)){
                 const error = new Error();
                 Object.assign(error, {code: 400, message: "중복된 전화번호입니다. 전화번호를 변경해주세요."});
                 throw error;
@@ -255,10 +255,13 @@ class UserService {
         }
         
         // 비밀 번호 수정사항이 있을 경우, sha256 단방향 해시 비밀번호 사용
-        if(bodyData.password){
+        // 10자리 패스워드 프론트와 맞춤(특수문자 포함은 front 에서 체크 후 넘어옴)
+        if(bodyData.password && bodyData.password.length >= 10){
             // sha256 단방향 해시 비밀번호 사용
             const hash = crypto.createHash('sha256').update(bodyData.password).digest('hex');
             bodyData.password = hash
+        } else {
+            Reflect.deleteProperty(bodyData, "password");
         }
         // update 날짜 부여
         bodyData.update_at = newDate();
