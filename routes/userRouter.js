@@ -38,10 +38,12 @@ router.get('/getuser', asyncHandler(async (req, res) => {
 // post 요청으로 url 직접 접근 차단 (완료)
 router.post('/logout', asyncHandler(async (req, res) => {
     res.cookie('token', null, {
-        secure: false,
+        //secure: false,
         maxAge: 0,
+        /*
         sameSite: 'None', // 쿠키를 크로스 도메인 요청에 포함시키기 위해 'None'으로 설정
         path: '/' // 쿠키의 경로 설정
+        */
     });
     return res.status(200).json({code: 200, message: "정상적으로 로그아웃되었습니다."});
 }));

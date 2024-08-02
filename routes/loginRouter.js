@@ -10,12 +10,12 @@ const secret = process.env.COOKIE_SECRET;
 // 처음 로그인 했을 때 클라이언트에 줄 토큰에다가 signature(secret) 으로 서명 후 전달함.
 const setUserToken = (res, user) => {
     const token = jwt.sign(user, secret);
-    res.cookie('token', token, {
+    res.cookie('token', token/*, {
         secure: false,
         maxAge: 360000000,
         sameSite: 'None', // 쿠키를 크로스 도메인 요청에 포함시키기 위해 'None'으로 설정
         path: '/' // 쿠키의 경로 설정
-    });
+    }*/);
     return token;
 };
 
