@@ -11,7 +11,7 @@ const secret = process.env.COOKIE_SECRET;
 const setUserToken = (res, user) => {
     const token = jwt.sign(user, secret);
     res.cookie('token', token, {
-        secure: true,
+        secure: false,
         maxAge: 360000000,
         sameSite: 'None', // 쿠키를 크로스 도메인 요청에 포함시키기 위해 'None'으로 설정
         path: '/' // 쿠키의 경로 설정
