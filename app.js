@@ -23,9 +23,14 @@ const app = express();
 dotenv.config();
 
 // 모든 도메인에서 cors 허용 (개발 및 테스트)
+// 배포 될 때에는 origin 에 배열로 vm 서버 ip port 넣기
+// origin: ["http://localhost:3000", ‘http://another-origin.com']
 const corsOptions = {
-    origin: "http://localhost:3000", // 배포 될 때에는 origin 에 배열로 vm 서버 ip port 넣기
-    // origin: ["http://localhost:3000", ‘http://another-origin.com']
+    origin: ["http://34.64.188.118", 
+             "http://localhost:3001",
+             "http://localhost:3000",
+             "http://34.64.188.118:3000",
+             "http://34.64.188.118:3001"],
     credentials: true,
 };
 app.use(cors(corsOptions));
