@@ -16,9 +16,10 @@ const imageToAWS = async (imageFiles) => {
     // 이미지 처리 및 가공 (용량 줄이고 리사이징 등) 은 동일함(db, s3 업로드할 때)
     // 단 return 할 때만 주의(s3 에 맞는 프로퍼티 체크)
     const imageProcessing = async (imageBuffer) => {
-        return sharp(imageBuffer).resize({width: 800, withoutEnlargement: true})
-            .withMetadata(true)
-            .rotate()  // EXIF 데이터에 기반하여 자동으로 이미지 회전 조정
+        // resize() 하기전에 .rotate() 호출해야 브라우저에 따라 회전이 다르게 보이는 현상 해결됨
+        return sharp(imageBuffer).rotate() // EXIF 데이터에 기반하여 자동으로 이미지 회전 조정
+            .resize({width: 800, withoutEnlargement: true})
+            .withMetadata()
             .webp({quality: 70})
             .toBuffer(); // 처리 후 버퍼 반환
     };
