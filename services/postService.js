@@ -31,7 +31,47 @@ class PostService {
         // 먼저 검색 도시(시 권역 행정구역), 허용 인원 검색 결과 데이터를 구함
         let checkPosts;
         if(!mymode){
-            checkPosts = await Post.find(query);
+            // MongoDB의 Aggregation Framework 를 사용하여 "여러 단계의 쿼리와 필터링을 연속" 으로 수행 가능
+            checkPosts = await Post.aggregate([
+                // 조건에 맞는 게시물 조회
+                { $match: query },
+                
+                // Reserve 컬렉션과 조인
+                {
+                    $lookup: {
+                        from: 'reserves',        // Reserve 컬렉션의 실제 이름(몽고 compass 확인 시 실제 컬렉션 이름은 소문자 복수형으로 쓰인다)
+                        localField: 'nanoid',    // Post의 nanoid 필드
+                        foreignField: 'post_nanoid', // Reserve의 post_nanoid 필드
+                        as: 'reservations'       // 결과 필드 이름을 reservations 로 지어 join 했다.
+                    }
+                },
+                // 날짜 범위에 맞는 예약 데이터 필터링
+                {
+                    $addFields: {
+                        reservations: {
+                            $filter: {
+                                input: '$reservations',
+                                as: 'reservation',
+                                cond: {
+                                    // reserve 의 start_date 가 search 의 endDate 보다 작거나 같고,
+                                    // reserve 의 end_date 가 search 의 startDate 보다 크거나 같다.
+                                    $and: [
+                                        { $lte: [ { $dateFromString: { dateString: '$$reservation.start_date' } }, new Date(search.endDate) ] },
+                                        { $gte: [ { $dateFromString: { dateString: '$$reservation.end_date' } }, new Date(search.startDate) ] }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                // 예약이 없는 게시물만 필터링
+                {
+                    $match: {
+                        reservations: { $eq: [] }
+                    }
+                }
+            ]);
+            //checkPosts = await Post.find(query);
         } else {
             const user = await User.findOne({email});
             checkPosts = await Post.find({author: user});
@@ -41,14 +81,19 @@ class PostService {
         // 마지막 검색 날짜가 예약 테이블에 있는 기간과 겹칠 경우 해당 post 를 제외시킴
         // 기본 날짜 값은 "다음날"
         let resultPosts;
-        if(!mymode){
-            resultPosts = await reserveService.availableDateCheck(
-                {posts: checkPosts, startDate: search.startDate, endDate: search.endDate});
+        if(!mymode){ 
+            resultPosts = checkPosts;
+            // reserveService.availableDateCheck 서비스 함수를 두 번 사용할 경우 제외되는 post 가 있을
+            // 때, perPage 에 못채우는 현상이 발생하여 상단의 aggregation 을 사용하여
+            // "author 정보를 포함하여 Post와 Reserve 컬렉션을 조인하고, 예약 날짜 범위에 따라 필터링하는 방식" 을 사용함
+
+            //resultPosts = await reserveService.availableDateCheck(
+            //{posts: checkPosts, startDate: search.startDate, endDate: search.endDate});
         } else {
             resultPosts = checkPosts;
         }
 
-        const total = !mymode ? resultPosts.result.length : resultPosts.length;
+        const total = !mymode ? resultPosts.length : resultPosts.length;
         const totalPage = Math.ceil(total/perPage);
 
         const data = {
@@ -86,11 +131,82 @@ class PostService {
         // 먼저 검색 도시(시 권역 행정구역), 허용 인원 검색 결과 데이터를 구하고 최신 생성일 기준으로 정렬함
         let checkPosts;
         if(!mymode){
-            checkPosts = await Post.find(query).sort({createdAt: -1}).skip(perPage * (page - 1))
-            .limit(perPage).populate({
-                path: 'author',
-                select: "email name nickname phone photo"
-            });
+            checkPosts = await Post.aggregate([
+                // 조건에 맞는 게시물 조회
+                { $match: query },
+
+                // Reserve 컬렉션과 조인
+                {
+                    $lookup: {
+                        from: 'reserves',        // Reserve 컬렉션의 실제 이름(몽고 compass 확인 시 실제 컬렉션 이름은 소문자 복수형으로 쓰인다)
+                        localField: 'nanoid',    // Post의 nanoid 필드
+                        foreignField: 'post_nanoid', // Reserve의 post_nanoid 필드
+                        as: 'reservations'       // 결과 필드 이름을 reservations 로 지어 join 했다.
+                    }
+                },
+                // 날짜 범위에 맞는 예약 데이터 필터링
+                {
+                    $addFields: {
+                        reservations: {
+                            $filter: {
+                                input: '$reservations',
+                                as: 'reservation',
+                                cond: {
+                                    // reserve 의 start_date 가 search 의 endDate 보다 작거나 같고,
+                                    // reserve 의 end_date 가 search 의 startDate 보다 크거나 같다.
+                                    $and: [
+                                        { $lte: [ { $dateFromString: { dateString: '$$reservation.start_date' } }, new Date(search.endDate) ] },
+                                        { $gte: [ { $dateFromString: { dateString: '$$reservation.end_date' } }, new Date(search.startDate) ] }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                // 예약이 없는 게시물만 필터링
+                {
+                    $match: {
+                        reservations: { $eq: [] }
+                    }
+                },
+                // 페이지네이션 처리
+                { $sort: { createdAt: -1 } },
+                { $skip: perPage * (page - 1) },
+                { $limit: perPage },
+                // Author 정보 조인
+                {
+                    $lookup: {
+                        from: 'users',        // User 컬렉션의 이름
+                        localField: 'author', // Post의 author 필드
+                        foreignField: '_id',  // User의 _id 필드 (관계형 db 에서의 외래키 역할)
+                        as: 'authorInfo'      // 결과 필드 이름을 authorInfo 로 지은 후 join
+                    }
+                },
+                // Author 정보 필터링 (email, name, nickname, phone, photo만 포함)
+                {
+                    $addFields: {
+                        authorInfo: {
+                            $map: {
+                                input: '$authorInfo',
+                                as: 'author', // 최종적으로 author 정보를 내보낼 때는 author 로 내보낸다.
+                                in: {
+                                    email: '$$author.email',
+                                    name: '$$author.name',
+                                    nickname: '$$author.nickname',
+                                    phone: '$$author.phone',
+                                    photo: '$$author.photo'
+                                }
+                            }
+                        }
+                    }
+                },
+                // Author 배열이 비어 있지 않으면, 첫 번째 요소를 선택
+                {
+                    $addFields: {
+                        authorInfo: { $arrayElemAt: ['$authorInfo', 0] }
+                    }
+                }
+            ]);
         } else {
             // 등록 숙소(자신의 숙소는 최대 4개까지만 등록가능하므로 굳이 페이지네이션이 필요없음
             const user = await User.findOne({email});
@@ -103,9 +219,13 @@ class PostService {
         // 마지막 검색 날짜가 예약 테이블에 있는 기간과 겹칠 경우 해당 post 를 제외시킴
         // 기본 날짜 값은 "다음날"
         let resultPosts;
-        if(!mymode){
-            resultPosts = await reserveService.availableDateCheck(
-                {posts: checkPosts, startDate: search.startDate, endDate: search.endDate});
+        if(!mymode){ resultPosts = checkPosts;
+            // reserveService.availableDateCheck 서비스 함수를 두 번 사용할 경우 제외되는 post 가 있을
+            // 때, perPage 에 못채우는 현상이 발생하여 상단의 aggregation 을 사용하여
+            // "author 정보를 포함하여 Post와 Reserve 컬렉션을 조인하고, 예약 날짜 범위에 따라 필터링하는 방식" 을 사용함
+            
+            //resultPosts = await reserveService.availableDateCheck(
+             //   {posts: checkPosts, startDate: search.startDate, endDate: search.endDate});
         } else {
             resultPosts = checkPosts;
         }
@@ -126,7 +246,7 @@ class PostService {
         }));
         */
         // 일반 db 일 경우 result 에 formattedPosts 넣기
-        return {result: !mymode ? resultPosts.result : resultPosts, code: 200, message: `숙소 정보 읽기 완료`};
+        return {result: !mymode ? resultPosts : resultPosts, code: 200, message: `숙소 정보 읽기 완료`};
     }
     
     // 숙소 쓰기
