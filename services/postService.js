@@ -53,11 +53,13 @@ class PostService {
                                 input: '$reservations',
                                 as: 'reservation',
                                 cond: {
-                                    // reserve 의 start_date 가 search 의 endDate 보다 작거나 같고,
-                                    // reserve 의 end_date 가 search 의 startDate 보다 크거나 같다.
+                                    // reserve 의 start_date 가 search 의 endDate 보다 작고,
+                                    // reserve 의 end_date 가 search 의 startDate 보다 크다. => 의 예약 데이터를 필터링 해야한다.
+                                    // 체크인 오후 3시 이후 고정, 체크아웃 오전 11시까지 고정이므로(start_date === search.endDate 일 수 도 있고
+                                    //    end_date === search.startDate 일 수도 있다.)
                                     $and: [
-                                        { $lte: [ { $dateFromString: { dateString: '$$reservation.start_date' } }, new Date(search.endDate) ] },
-                                        { $gte: [ { $dateFromString: { dateString: '$$reservation.end_date' } }, new Date(search.startDate) ] }
+                                        { $lt: [ { $dateFromString: { dateString: '$$reservation.start_date' } }, new Date(search.endDate) ] },
+                                        { $gt: [ { $dateFromString: { dateString: '$$reservation.end_date' } }, new Date(search.startDate) ] }
                                     ]
                                 }
                             }
@@ -152,11 +154,13 @@ class PostService {
                                 input: '$reservations',
                                 as: 'reservation',
                                 cond: {
-                                    // reserve 의 start_date 가 search 의 endDate 보다 작거나 같고,
-                                    // reserve 의 end_date 가 search 의 startDate 보다 크거나 같다.
+                                    // reserve 의 start_date 가 search 의 endDate 보다 작고,
+                                    // reserve 의 end_date 가 search 의 startDate 보다 크다. => 의 예약 데이터를 필터링 해야한다.
+                                    // 체크인 오후 3시 이후 고정, 체크아웃 오전 11시까지 고정이므로(start_date === search.endDate 일 수 도 있고
+                                    //    end_date === search.startDate 일 수도 있다.)
                                     $and: [
-                                        { $lte: [ { $dateFromString: { dateString: '$$reservation.start_date' } }, new Date(search.endDate) ] },
-                                        { $gte: [ { $dateFromString: { dateString: '$$reservation.end_date' } }, new Date(search.startDate) ] }
+                                        { $lt: [ { $dateFromString: { dateString: '$$reservation.start_date' } }, new Date(search.endDate) ] },
+                                        { $gt: [ { $dateFromString: { dateString: '$$reservation.end_date' } }, new Date(search.startDate) ] }
                                     ]
                                 }
                             }
@@ -223,7 +227,7 @@ class PostService {
             // reserveService.availableDateCheck 서비스 함수를 두 번 사용할 경우 제외되는 post 가 있을
             // 때, perPage 에 못채우는 현상이 발생하여 상단의 aggregation 을 사용하여
             // "author 정보를 포함하여 Post와 Reserve 컬렉션을 조인하고, 예약 날짜 범위에 따라 필터링하는 방식" 을 사용함
-            
+
             //resultPosts = await reserveService.availableDateCheck(
              //   {posts: checkPosts, startDate: search.startDate, endDate: search.endDate});
         } else {
