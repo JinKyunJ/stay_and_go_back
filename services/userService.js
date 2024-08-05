@@ -64,7 +64,7 @@ class UserService {
         const user = await User.findOne({name, phone});
         if(!user){
             const error = new Error();
-            Object.assign(error, {data: [], code: 404, message: "이름과 전화번호로 조회된 회원이 없습니다."})
+            Object.assign(error, {code: 404, message: "이름과 전화번호로 조회된 회원이 없습니다."})
             throw error;
         }
         console.log(user);
@@ -151,7 +151,13 @@ class UserService {
         let verify;
         // 회원가입에서 인증 코드 요청했었는지, 비밀번호 찾기에서 인증 코드 요청했었는지 판단 변수
         let myCode;
-        if(secret.length === 6){
+
+        if(secret.length !== 6 && secret.length !== 8){
+            const error = new Error();
+            Object.assign(error, {code: 400, message: "인증 코드의 길이를 확인해주세요."});
+            throw error;
+        }
+        else if(secret.length === 6){
             myCode = code.VERIFYCODE;
             verify = await Verify.findOne({data: email, code: code.VERIFYCODE});
             if(!verify){
@@ -284,7 +290,7 @@ class UserService {
         const user = await User.findOne({email});
         if(!user){
             const error = new Error();
-            Object.assign(error, {code: 404, message: "이메일로 조회된 회원이 없습니다."})
+            Object.assign(error, {code: 404, message: "탈퇴한 회원 또는 이메일로 조회된 회원이 없습니다."})
             throw error;
         } else {
             await Post.deleteMany({author: user});
