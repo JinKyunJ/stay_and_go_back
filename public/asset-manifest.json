@@ -1,14 +1,14 @@
 {
   "files": {
-    "main.css": "/static/css/main.3bbc6bdf.css",
-    "main.js": "/static/js/main.f247b663.js",
+    "main.css": "/static/css/main.5434acad.css",
+    "main.js": "/static/js/main.fba6e3ac.js",
     "static/js/206.4e1fb884.chunk.js": "/static/js/206.4e1fb884.chunk.js",
     "static/media/house.jpg": "/static/media/house.23e4341c23ca0719ef3f.jpg",
     "static/media/travel.png": "/static/media/travel.4e86fe24b18e18156c8d.png",
     "index.html": "/index.html"
   },
   "entrypoints": [
-    "static/css/main.3bbc6bdf.css",
-    "static/js/main.f247b663.js"
+    "static/css/main.5434acad.css",
+    "static/js/main.fba6e3ac.js"
   ]
 }
