@@ -14,7 +14,7 @@
       "purpose": "any"
     }
   ],
-  "start_url": "http://34.64.188.118/",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#f87878",
   "background_color": "#ffffff"
