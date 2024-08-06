@@ -4,8 +4,14 @@
   "icons": [
     {
       "src": "./favicon-icon/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "sizes": "48x48",
       "type": "image/x-icon"
+    },
+    {
+      "src": "./10-1.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
   "start_url": "http://34.64.188.118/",
