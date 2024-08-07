@@ -2,19 +2,13 @@ const LocalStrategy = require('passport-local').Strategy;
 const {User} = require('../models');
 // sha256 단방향 해시 비밀번호 사용
 const crypto = require('crypto');
-const CryptoJS = require('crypto-js');
+// 복호화 함수
+const decryptPassword = require('../utils/decryptPassword');
 
 // id 필드와 password 필드 정의
 const config = {
     usernameField: 'email',
     passwordField: 'password'
-};
-
-// aes 128 복호화 함수
-const decryptPassword = (encryptedPassword, key) => {
-    const decrypting = CryptoJS.AES.decrypt(encryptedPassword, key);
-    const decrypted = decrypting.toString(CryptoJS.enc.Utf8);
-    return decrypted;
 };
 
 // 기본 로그인 동작 strategy 작성

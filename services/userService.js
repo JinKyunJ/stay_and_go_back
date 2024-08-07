@@ -5,6 +5,8 @@ const sendEmail = require('../utils/nodemailer');
 const newDate = require('../utils/newDate');
 // sha256 단방향 해시 비밀번호 사용
 const crypto = require('crypto');
+// aes128(front) 비밀번호 복호화
+const decryptPassword = require('../utils/decryptPassword');
 
 class UserService {
     /* create 완료 */
@@ -44,8 +46,13 @@ class UserService {
         // 이메일 인증이 되었고 회원가입을 진행하므로 더 이상 쓸모가 없으므로 제거
         await Verify.deleteMany(verify);
 
+        // password 를 백엔드에 보내 줄 때 aes-128 양방향 암호화 적용
+        // 백엔드에서는 aes-128 을 복호화하고 sha-256 해시화하여 db sha-256 해시 값과 비교시킨다.
+        const key = process.env.AES_KEY;
+        const decryptedPassword = decryptPassword(bodyData.password, key);
+
         // sha256 단방향 해시 비밀번호 사용
-        const hash = crypto.createHash('sha256').update(bodyData.password).digest('hex');
+        const hash = crypto.createHash('sha256').update(decryptedPassword).digest('hex');
         const newUser = await User.create({
             email: bodyData.email,
             name: bodyData.name,
@@ -161,48 +168,48 @@ class UserService {
             verify = await Verify.findOne({data: email, code: code.VERIFYCODE});
             if(!verify){
                 const error = new Error();
-                Object.assign(error, {code: 400, message: "회원가입 인증 코드를 요청하지 않은 이메일 입니다."});
+                Object.assign(error, {code: 400, message: "인증 코드 길이 확인이 필요하거나, 인증 요청하지 않은 이메일 입니다."});
                 throw error;
+            } else {
+                // 인증 코드 비교 진행( 정상 인증 코드로 판단 시 is_verified 를 true 로 변경하여 회원가입 절차가 가능하도록 함)
+                if(secret === verify.secret){
+                    await Verify.updateOne({data: email, code: code.VERIFYCODE},{
+                        is_verified: true
+                    });
+                    return {code: 200, message: "이메일 인증 코드가 정상적으로 확인되었습니다."}   
+                } else {
+                    await Verify.updateOne({data: email, code: code.VERIFYCODE},{
+                        is_verified: false
+                    });
+                    const error = new Error();
+                    Object.assign(error, {code: 400, message: "이메일 인증 코드를 다시 확인해주세요."});
+                    throw error;
+                }
             }
-        } // 8 자리는 비밀번호 찾기 인증 코드 요청 길이
+        } 
+
+        // 8 자리는 비밀번호 찾기 인증 코드 요청 길이
         else if(secret.length === 8){
             myCode = code.PASSWORD;
             verify = await Verify.findOne({data: email, code: code.PASSWORD});
             if(!verify){
                 const error = new Error();
-                Object.assign(error, {code: 400, message: "비밀번호 찾기 인증 코드를 요청하지 않은 이메일 입니다."});
+                Object.assign(error, {code: 400, message: "인증 코드 길이 확인이 필요하거나, 인증 요청하지 않은 이메일 입니다."});
                 throw error;
+            } else {
+                if(secret === verify.secret){
+                    // 비밀번호 찾기는 비밀번호 찾기 요청 버튼을 눌렀을 때 인증 데이터 삭제하여야 함
+                    await Verify.deleteMany({data: email, code: code.PASSWORD});
+                    return {code: 200, message: "이메일 인증 코드가 정상적으로 확인되었습니다."}
+                } else {
+                    await Verify.updateOne({data: email, code: code.PASSWORD},{
+                        is_verified: false
+                    });
+                    const error = new Error();
+                    Object.assign(error, {code: 400, message: "이메일 인증 코드를 다시 확인해주세요."});
+                    throw error;
+                }
             }
-        }
-
-        
-        // 인증 코드 비교 진행( 정상 인증 코드로 판단 시 is_verified 를 true 로 변경하여 회원가입 절차가 가능하도록 함)
-        if(secret === verify.secret){
-            // 회원 가입에서 요청했었을 때
-            if(myCode === code.VERIFYCODE){
-                await Verify.updateOne({data: email, code: code.VERIFYCODE},{
-                    is_verified: true
-                });
-                // 회원 가입은 인증 요청 누르고 일단 체크만 하고, 회원 등록 버튼을 눌렀을 때 인증 데이터 삭제됨
-            } // 비밀번호 찾기에서 요청했었을 때
-            else if(myCode === code.PASSWORD){
-                // 비밀번호 찾기는 비밀번호 찾기 요청 버튼을 눌렀을 때 인증 데이터 삭제하여야 함
-                await Verify.deleteMany({data: email, code: code.PASSWORD});
-            }
-            return {code: 200, message: "이메일 인증 코드가 정상적으로 확인되었습니다."}
-        } else {
-            if(myCode === code.VERIFYCODE){
-                await Verify.updateOne({data: email, code: code.VERIFYCODE},{
-                    is_verified: false
-                });
-            } else if(myCode === code.PASSWORD){
-                await Verify.updateOne({data: email, code: code.PASSWORD},{
-                    is_verified: false
-                });
-            }
-            const error = new Error();
-            Object.assign(error, {code: 400, message: "이메일 인증 코드를 다시 확인해주세요."});
-            throw error;
         }
     }
 
@@ -259,13 +266,18 @@ class UserService {
                 throw error;
             };
         }
-        
+
         // 비밀 번호 수정사항이 있을 경우, sha256 단방향 해시 비밀번호 사용
         // 10자리 패스워드 프론트와 맞춤(특수문자 포함은 front 에서 체크 후 넘어옴)
         // crypto 의 경우 비밀번호 보다는 덜 중요한 정보에 많이 쓰이고, Bcrypt 가 더 비밀번호로는 많이 쓰임(피드백 추천 사항)
         if(bodyData.password && bodyData.password.length >= 10){
+            // password 를 백엔드에 보내 줄 때 aes-128 양방향 암호화 적용
+            // 백엔드에서는 aes-128 을 복호화하고 sha-256 해시화하여 db sha-256 해시 값과 비교시킨다.
+            const key = process.env.AES_KEY;
+            const decryptedPassword = decryptPassword(bodyData.password, key);
+
             // sha256 단방향 해시 비밀번호 사용
-            const hash = crypto.createHash('sha256').update(bodyData.password).digest('hex');
+            const hash = crypto.createHash('sha256').update(decryptedPassword).digest('hex');
             bodyData.password = hash
         } else {
             Reflect.deleteProperty(bodyData, "password");
