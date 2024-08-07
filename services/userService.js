@@ -67,7 +67,6 @@ class UserService {
             Object.assign(error, {code: 404, message: "이름과 전화번호로 조회된 회원이 없습니다."})
             throw error;
         }
-        console.log(user);
         return {data: user.email, code: 200, message: "유저 ID가 성공적으로 조회되었습니다. ID를 확인해주세요!"};
     };
 

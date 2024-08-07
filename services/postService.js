@@ -317,7 +317,6 @@ class PostService {
         }
         
         bodyData.imageUrl = fixedImageUrl;
-        console.log(bodyData.imageUrl);
         // s3 이미지 url
         // main_image <-> sub_images 분리시킴
         const main_image = bodyData.imageUrl[0];
