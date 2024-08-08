@@ -291,8 +291,6 @@ class UserService {
         Reflect.deleteProperty(bodyData, "is_admin");
         Reflect.deleteProperty(bodyData, "name");
 
-        console.log(bodyData)
-
         await User.updateOne(user, bodyData);
         return {code: 200, message: `${email} 사용자 수정 동작 완료`};
     }
