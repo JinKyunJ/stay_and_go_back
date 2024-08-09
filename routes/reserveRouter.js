@@ -1,18 +1,87 @@
 const {Router} = require('express');
 const router = Router();
 const asyncHandler = require('../middlewares/async-handler');
+const reserveService = require('../services/reserveService');
+const reqUserCheck = require('../middlewares/reqUserCheck');
+const { User } = require('../models');
 
-// 여행 item primary key : 여행 item {nanoid}
-// 1. 추가 가이드라인 (!!!)
-// 유저 이메일 + reserve 에 post 정보가 추가될 때에는 외래키로 넣지말고 실제 값을 넣어야 한다.
-// post 가 제거되더라도 "지난 여행" 으로 볼 수 있어야 하니까.
-// 2. 수정은 할 수 없지만 삭제(front 에서는 "취소" 로 표기)는 여행 시작일 -2일까지 가능하다. 
-//   (삭제가 가능한 날은 여행 시작일 -2 일(ex. 24-07-07 시작일 일 때 24-07-05 날 까지 삭제가능)
-//   (단, 여행 마지막 날 이후 front 기준 "지난 여행" 이 위치한 곳으로 아이템이 이동해야 한다.
-// front : 나의 여행에서 item 상세 보기 시 : 모달로 예약했었던 내용 + (main + sub image) url
-// 3. 읽기 가이드라인
-// 모달 화면 체크하고 스키마 확인 및 수정하고, 진행하면 문제 없을 거 같음.
+// 지난 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreservepast/page', asyncHandler(async (req,res) => { 
+    const {mymode} = req.body;
+    // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+    if(mymode && !req.user){
+        return res.status(400).json({code: 400, message: "로그인하지 않은 사용자입니다."});
+    }
+    const user = mymode ? await User.findOne({email: req.user.email}) : "";
+    const host_email = mymode ? "" : req.user.email;
+    const result = await reserveService.getReservePastPage({mymode, user, host_email});
+    return res.status(200).json(result);
+}));
 
-// P.S. 유저 삭제 시 유저 이메일 붙은 reserve Data & post Data 도 삭제해야한다.(예정 !)
+// 다가오는 여행 리스트 페이지 정보 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreserveupcoming/page', asyncHandler(async (req,res) => { 
+    const {mymode} = req.body;
+    // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+    if(mymode && !req.user){
+        return res.status(400).json({code: 400, message: "로그인하지 않은 사용자입니다."});
+    }
+    const user = mymode ? await User.findOne({email: req.user.email}) : "";
+    const host_email = mymode ? "" : req.user.email;
+    const result = await reserveService.getReserveUpcomingPage({mymode, user, host_email});
+    return res.status(200).json(result);
+}));
+
+// 지난 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreservepast/page/read', asyncHandler(async (req,res) => {
+    const {nowpage, mymode} = req.body;
+    // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+    if(mymode && !req.user){
+        return res.status(400).json({code: 400, message: "로그인하지 않은 사용자입니다."});
+    }
+    const user = mymode ? await User.findOne({email: req.user.email}) : "";
+    const host_email = mymode ? "" : req.user.email;
+    const result = await reserveService.getReservePastPageRead({nowpage, mymode, user, host_email});
+    return res.status(200).json(result);
+}));
+
+// 다가오는 여행 리스트 read (mymode === true : 나의여행, false : 예약자관리)
+router.post('/getreserveupcoming/page/read', asyncHandler(async (req,res) => {
+    const {nowpage, mymode} = req.body;
+    // 사용자가 mymode 를 체크하여 검색할 쿼리(author OR host_email) 을 정함
+    if(mymode && !req.user){
+        return res.status(400).json({code: 400, message: "로그인하지 않은 사용자입니다."});
+    }
+    const user = mymode ? await User.findOne({email: req.user.email}) : "";
+    const host_email = mymode ? "" : req.user.email;
+    const result = await reserveService.getReserveUpcomingPageRead({nowpage, mymode, user, host_email});
+    return res.status(200).json(result);
+}));
+
+// 여행(or 예약) 상세보기 정보
+router.get('/get/detail/:nanoid', asyncHandler(async (req,res) => {
+    const {nanoid} = req.params;
+    const result = await reserveService.getReserveDetail({nanoid});
+    return res.status(200).json(result);
+}));
+
+// 여행 작성
+router.post('/write', asyncHandler(async (req, res) => {
+    const bodyData = req.body; // post 의 nanoid 가 필수적으로 필요함 !!!
+    // nanoid 는 bodyData 에 post_nanoid 이름으로 들어올 것
+    // title 도 post 에서 title 그대로 가져올 것
+    // + startSearch state 에서 각 인원수(adult, child, baby 이름으로 가져올 것)
+    //                      , 시작 끝 날짜 start_date / end_date 이름으로 가져올 것
+    //                      , 총 금액(amount) 도 front 에서 계산 ! 해서 amount 이름으로 가져올 것
+    bodyData.email = req.user.email;
+    const result = await reserveService.writeReserve(bodyData);
+    return res.status(200).json(result);
+}));
+
+// 여행 삭제(취소)
+router.delete('/delete', asyncHandler(async (req, res) => {
+    const {nanoid} = req.body;
+    const result = await reserveService.deleteReserve({nanoid});
+    return res.status(200).json(result);
+}));
 
 module.exports = router;

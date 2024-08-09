@@ -29,6 +29,7 @@ const local = new LocalStrategy(config, async(email, password, done) => {
             Object.assign(error, {code: 404, message: "비밀번호가 일치하지 않습니다."});
             throw error;
         }
+        console.log(user);
 
         // 정상 done 콜백 함수 호출
         done(null, {
@@ -38,6 +39,7 @@ const local = new LocalStrategy(config, async(email, password, done) => {
             nickname: user.nickname,
             phone: user.phone,
             is_admin: user.is_admin,
+            photo: user.photo ? user.photo : ""
         });
     } catch(err) {
         done(err, null);

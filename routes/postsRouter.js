@@ -38,7 +38,7 @@ router.get('/read/:nanoid', asyncHandler(async (req, res) => {
 }));
 
 // 숙소 작성 (완료) (formData header 셋팅 체크(front))
-router.post('/write', reqUserCheck, upload.array('images'), asyncHandler(async (req, res) => {
+router.post('/write', upload.array('images'), asyncHandler(async (req, res) => {
     const bodyData = req.body;
     bodyData.email = req.user.email;
     // 요청 파일 없음 에러(임의의 코드 : 410)
@@ -50,7 +50,8 @@ router.post('/write', reqUserCheck, upload.array('images'), asyncHandler(async (
 }));
 
 // 숙소 수정 (완료) (formData header 셋팅 체크(front)) (버킷 이미지 삭제 -> 새 이미지 등록 -> url 반환(util 폴더 참고))
-router.put('/put', reqUserCheck, upload.array('images'), asyncHandler(async (req, res) => {
+// mode 값이 추가로 담겨져야 함!!!(1: 메인 이미지, 2: 서브, 3: 둘 다 교체, 0. 교체 안함)
+router.put('/put', upload.array('images'), asyncHandler(async (req, res) => {
     // 숙소 정보에 추가로 로그인된 사용자 email 이 있어야 함 *front 에서도 체크해야 함
     const bodyData = req.body;
     bodyData.email = req.user.email;
@@ -64,10 +65,11 @@ router.put('/put', reqUserCheck, upload.array('images'), asyncHandler(async (req
 // => (지난 여행으로 남아야 하고, 애초에 reserve 에 추가될 때에는 
 //     외래 키가 들어가지 않고 실제 값들이 들어갈 것임 !!)
 // => 버킷에서 실제 이미지도 지우지 않는다. (마찬가지로 지난 여행에서 확인해야함.)
-router.delete('/delete', reqUserCheck, asyncHandler(async (req, res) => {
+// => 숙소 삭제 시 reserve 삭제 케이스 있음:
+//    지우는 숙소가 다가오는 여행 중 아직 시작 안한 reserve 가 있을 경우에는 해당 reserve 도 제거
+router.delete('/delete', asyncHandler(async (req, res) => {
     const {nanoid} = req.body;
-    const email = req.user.email;
-    const result = await postService.delPost({email, nanoid});
+    const result = await postService.delPost({nanoid});
     return res.status(200).json(result);
 }));
 
