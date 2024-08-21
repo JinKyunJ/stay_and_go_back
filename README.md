@@ -6,11 +6,7 @@
 
 - [Postman](https://documenter.getpostman.com/view/35331809/2sA3kaCeUx#intro)
 
-### 시연 영상 🎥
-
-<video width="720" height="480" controls>
-  <source src="./video/2차 팀프로젝트 시연영상.mp4" type="video/mp4">
-</video>
+### [시연 영상 보기 🎥](./video/2차%20팀프로젝트%20시연영상.mp4)
 
 ### PPT
 
