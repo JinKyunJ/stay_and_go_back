@@ -28,8 +28,8 @@ dotenv.config();
 // CORS 설정
 const corsOptions = {
   origin: [
-    "https://your-frontend-url.vercel.app", // Vercel에서 배포된 프론트엔드 URL
-    "http://localhost:3000",
+    "https://stay-and-go-front.vercel.app", // Vercel에서 배포된 프론트엔드 URL
+    "http://localhost:3001",
   ], // 로컬 개발용
   credentials: true,
 };
