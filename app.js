@@ -5,15 +5,18 @@ const passport = require("passport");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+
 // login strategy
 const local = require("./strategy/loginStrategy");
 const jwtlocal = require("./strategy/jwtStrategy");
 const jwtMiddleware = require("./middlewares/jwtMiddleware");
+
 // server router
 const userRouter = require("./routes/userRouter");
 const loginRouter = require("./routes/loginRouter");
 const postRouter = require("./routes/postsRouter");
 const reserveRouter = require("./routes/reserveRouter");
+
 // multer 설정 가져오기
 const upload = require("./utils/multerConfig");
 
@@ -22,21 +25,7 @@ const app = express();
 // dotenv
 dotenv.config();
 
-// 모든 도메인에서 cors 허용 (개발 및 테스트)
-// 배포 될 때에는 origin 에 배열로 vm 서버 ip port 넣기
-// origin: ["http://localhost:3000", ‘http://another-origin.com']
-/*
-const corsOptions = {
-    origin: ["http://34.64.188.118", 
-             "http://localhost:3001",
-             "http://localhost:3000",
-             "http://34.64.188.118:3000",
-             "http://34.64.188.118:3001"],
-    credentials: true,
-};
-app.use(cors(corsOptions));
-*/
-
+// CORS 설정
 const corsOptions = {
   origin: [
     "https://your-frontend-url.vercel.app", // Vercel에서 배포된 프론트엔드 URL
@@ -50,7 +39,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(express.static("public"));
+// 정적 파일 제공
+app.use(express.static(path.join(__dirname, "public")));
+
 // cookie parser
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
@@ -77,9 +68,9 @@ app.use("/login", loginRouter);
 app.use("/post", postRouter);
 app.use("/reserve", reserveRouter);
 
-// app.get (front routing)
+// 모든 경로에 대해 index.html 반환
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // 예외 error 핸들러
@@ -96,6 +87,7 @@ app.use((err, req, res, next) => {
   }
 });
 
+// 서버 시작
 app.listen(process.env.PORT, () => {
   console.log(`${process.env.PORT} server port connected`);
 });
