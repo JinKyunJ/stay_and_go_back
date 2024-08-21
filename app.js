@@ -31,7 +31,9 @@ const corsOptions = {
     "https://stay-and-go-front.vercel.app", // Vercel에서 배포된 프론트엔드 URL
     "http://localhost:3001",
   ], // 로컬 개발용
-  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 허용할 HTTP 메서드
+  credentials: true, // 쿠키 허용 설정
+  optionsSuccessStatus: 204, // 일부 브라우저에서 CORS 요청이 실패하는 것을 방지
 };
 app.use(cors(corsOptions));
 
