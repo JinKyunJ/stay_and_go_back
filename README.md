@@ -10,6 +10,8 @@
 
 ### PPT
 
+- 테스트 계정 : test2@test2.com / 1q2w3e4r1!
+
 ![2project-1](./images/2project-1.png)
 ![2project-2](./images/2project-2.png)
 ![2project-3](./images/2project-3.png)
